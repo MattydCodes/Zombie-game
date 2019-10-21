@@ -191,6 +191,11 @@ void managezombies(){
 }
 
 void movezombies(){
+  if(round > 3){
+    zombspeed = 1.25+round*0.05;
+  }else{
+    zombspeed = 0.75+round*0.05;
+  }
   for(int i = zombies.size()-1; i > -1; i--){
     zombie current = zombies.get(i);
     current.move();

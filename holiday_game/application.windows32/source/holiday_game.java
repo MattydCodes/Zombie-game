@@ -36,15 +36,13 @@ public void setup(){
   blood = loadShader("data/shaders/health.glsl");
   song = new SoundFile(this,"data/sounds/song.mp3");
   shader = loadShader("shaders/frag.glsl", "shaders/vert.glsl");
-  gunshot = new SoundFile[20];
-  zombiesound = new SoundFile[250];
+  gunshot = new SoundFile[30];
+  zombiesound = new SoundFile[200];
   for(int i = 0; i < gunshot.length; i++){
     gunshot[i] = new SoundFile(this,"data/sounds/gunshot.wav");
-    gunshot[i].amp(1.0f);
   }
   for(int i = 0; i < zombiesound.length; i++){
     zombiesound[i] = new SoundFile(this,"data/sounds/zomb" + str(round(random(1,5))) + ".wav"); 
-    zombiesound[i].amp(4.0f);
   }
   song.amp(0.1f);
   setupbullet();
@@ -2033,6 +2031,11 @@ public void managezombies(){
 }
 
 public void movezombies(){
+  if(round > 3){
+    zombspeed = 1.25f+round*0.05f;
+  }else{
+    zombspeed = 0.75f+round*0.05f;
+  }
   for(int i = zombies.size()-1; i > -1; i--){
     zombie current = zombies.get(i);
     current.move();
