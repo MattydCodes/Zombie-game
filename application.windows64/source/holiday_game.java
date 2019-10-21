@@ -2069,7 +2069,7 @@ public float bearing(PVector a, PVector b) {
         theta += TWOPI;
     return RAD2DEG * theta;
 }
-  public void settings() {  size(1920,1080,P3D); }
+  public void settings() {  fullScreen(P3D); }
   static public void main(String[] passedArgs) {
     String[] appletArgs = new String[] { "holiday_game" };
     if (passedArgs != null) {

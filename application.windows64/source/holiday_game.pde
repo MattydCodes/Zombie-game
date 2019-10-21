@@ -11,7 +11,7 @@ chunk c;
 int seed;
 PShader shader;
 void setup(){
-  size(1920,1080,P3D);
+  fullScreen(P3D);
   createmyip();
   blood = loadShader("data/shaders/health.glsl");
   song = new SoundFile(this,"data/sounds/song.mp3");
