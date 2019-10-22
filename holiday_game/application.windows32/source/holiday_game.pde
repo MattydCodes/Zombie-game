@@ -24,9 +24,9 @@ void setup(){
   for(int i = 0; i < zombiesound.length; i++){
     zombiesound[i] = new SoundFile(this,"data/sounds/zomb" + str(round(random(1,5))) + ".wav"); 
   }
-  song.amp(0.1);
+  song.amp(0.07);
   setupbullet();
-  seed = 50;
+  seed = int(random(1000));
   noiseSeed(seed);
   trees = new PVector[10000];
   c = new chunk(new PVector(0,0));
@@ -39,6 +39,9 @@ void setup(){
   barrel[0] = loadshape("data/barrel1.obj","data/Barreltext.png");
   barrel[0].rotateX(PI/2);
   barrel[0].scale(2);
+  towerm[0] = loadshape("data/watchtower1.obj","data/towertext1.png");
+  towerm[0].rotateX(PI/2);
+  towerm[0].scale(2);  
   pmodel = loadshape("data/playermodel.obj","data/playertext.png");
   pmodel.rotateX(PI/2);
   pmodel.rotateZ(PI);
@@ -124,12 +127,15 @@ void draw3d(){
   }else{
     movezombies();
   }
+  removedeadzombies();
   managebarriers();
+  managetowers();
   managecorpses();
   manageparticles();
   drawplayers();
   if(alive){
     showbarrel();
+    showtower();
     cam();
     displayweapon();
   }else{

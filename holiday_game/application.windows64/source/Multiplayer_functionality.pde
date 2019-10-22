@@ -44,7 +44,7 @@ void createmyip(){
 
 void setupserver(){
   server = new Server(this,port);
-  //serverip = server.ip();
+  serverip = server.ip();
   client = new Client(this,serverip,port);
 }
 
@@ -55,10 +55,10 @@ void setupclient(){
 
 void serverEvent(Server someServer, Client someClient) {
   println("New connection: " + someClient.ip());
-  if(frameCount%2 == 0){
-    updatezombiepositions();
-    refreshbarriers();
-  }
+  updatezombiepositions();
+  refreshbarriers();
+  refreshtowers();
+  server.write(sendseed(seed));
 }
 
 void joinServer(String ip_,int port_){
@@ -163,12 +163,22 @@ String createbmessage(String ip,PVector pos, PVector vel){
 }
 
 String removebarrier(float id){
-  String msg = "e" + str(id) + "]";
+  String msg = "e" + str(id) + "]"; //Used:pmcdoequlntsva   Available: bfghijkruwxyz
+  return msg;
+}
+
+String removetower(float id){
+  String msg = "a" + str(id) + "]";
   return msg;
 }
 
 String placebarrier(float id, PVector pos){
   String msg = "q" + str(id) + "i" + str(pos.x) + "x" + str(pos.y) + "y" + str(pos.z) + "]";
+  return msg;
+}
+
+String placetower(float id, PVector pos){
+  String msg = "b" + str(id) + "i" + str(pos.x) + "x" + str(pos.y) + "y" + str(pos.z) + "]";
   return msg;
 }
 
@@ -182,6 +192,10 @@ String disconnect(String ip){
 
 String killsreport(String ip, int killc){
   return "n" + ip + "i" + str(killc) + "]";
+}
+
+String sendseed(int sed){
+  return "t" + str(sed) + "]";
 }
 
 void playthesong(){
@@ -255,7 +269,7 @@ void actonmessage(String msg){
       float y = float(msg.substring(index1+1,index2));
       index1 = msg.indexOf('%'); 
       index2 = msg.indexOf(']'); //z
-      float z = float(msg.substring(index1+1,index2-1));
+      float z = float(msg.substring(index1+1,index2));
       clients.add(new playerc(new PVector(x,y,z),ip));
       playerc current = clients.get(clients.size()-1);
       current.rotx = a;
@@ -316,11 +330,12 @@ void actonmessage(String msg){
       current.wpnstate = e;
       current.sht = f;
       current.lifetime = 180;
-      //current.name = name;
+      current.name = name;
       current.nametext.setTexture(current.createtexture());
     }
   }else if(st.equals("m")){
     boolean foundz = false;
+    boolean isdead = false;
     int j = 0;
     int index = msg.indexOf('i');
     int id = int(msg.substring(1,index));
@@ -331,29 +346,36 @@ void actonmessage(String msg){
         break;
       }
     }
-    if(foundz == false){
+    for(int n = 0; n < corpses.size(); n++){
+      corpse current = corpses.get(n);
+      if(current.id == id){
+        isdead = true;
+        break;
+      }
+    }
+    if(foundz == false && isdead == false){
       int index1 = msg.indexOf('i'); 
       int index2 = msg.indexOf('x');
-      float x = float(msg.substring(index1+1,index2-1));
+      float x = float(msg.substring(index1+1,index2));
       index1 = msg.indexOf('x');
       index2 = msg.indexOf('y');
-      float y = float(msg.substring(index1+1,index2-1));
+      float y = float(msg.substring(index1+1,index2));
       index1 = msg.indexOf('y');;
       index2 = msg.indexOf(']');
-      float z = float(msg.substring(index1+1,index2-1));
+      float z = float(msg.substring(index1+1,index2));
       zombies.add(new zombie(new PVector(x,y,z),int(id),100));
-    }else{
+    }else if(isdead == false){
       zombie current = zombies.get(j);
       if(current.hp > 0){
         int index1 = msg.indexOf('i');
         int index2 = msg.indexOf('x');
-        float x = float(msg.substring(index1+1,index2-1));
+        float x = float(msg.substring(index1+1,index2));
         index1 = index2;
         index2 = msg.indexOf('y');
-        float y = float(msg.substring(index1+1,index2-1));
+        float y = float(msg.substring(index1+1,index2));
         index1 = index2;
         index2 = msg.indexOf(']');
-        float z = float(msg.substring(index1+1,index2-1));
+        float z = float(msg.substring(index1+1,index2));
         current.pos.x = x;
         current.pos.y = y;
         current.pos.z = z;
@@ -362,19 +384,19 @@ void actonmessage(String msg){
   }else if(st.equals("c")){
       int index1 = msg.indexOf('c');
       int index2 = msg.indexOf('i');
-      int id = int(msg.substring(index1+1,index2-1));
+      int id = int(msg.substring(index1+1,index2));
       index1 = msg.indexOf('i');
       index2 = msg.indexOf('r');
-      float rot = float(msg.substring(index1+1,index2-1));
+      float rot = float(msg.substring(index1+1,index2));
       index1 = msg.indexOf('r'); 
       index2 = msg.indexOf('x');
-      float x = float(msg.substring(index1+1,index2-1));
+      float x = float(msg.substring(index1+1,index2));
       index1 = msg.indexOf('x');
       index2 = msg.indexOf('y');
-      float y = float(msg.substring(index1+1,index2-1));
+      float y = float(msg.substring(index1+1,index2));
       index1 = msg.indexOf('y');
       index2 = msg.indexOf(']');
-      float z = float(msg.substring(index1+1,index2-1));
+      float z = float(msg.substring(index1+1,index2));
       boolean f = false;
       for(int i = 0; i < corpses.size(); i++){
         if(corpses.get(i).id == id){
@@ -390,7 +412,7 @@ void actonmessage(String msg){
     int id = int(msg.substring(index1+1,index2));
     index1 = msg.indexOf('h');
     index2 = msg.indexOf(']');
-    float hp = float(msg.substring(index1+1,index2-1));
+    float hp = float(msg.substring(index1+1,index2));
     for(int i = 0; i < zombies.size(); i++){
       zombie current = zombies.get(i);
       if(current.id == id){
@@ -405,22 +427,22 @@ void actonmessage(String msg){
       String id = msg.substring(index1+1,index2);
       index1 = msg.indexOf('i');
       index2 = msg.indexOf('a');
-      float a = float(msg.substring(index1+1,index2-1));
+      float a = float(msg.substring(index1+1,index2));
       index1 = msg.indexOf('a');
       index2 = msg.indexOf('b');
-      float b = float(msg.substring(index1+1,index2-1));
+      float b = float(msg.substring(index1+1,index2));
       index1 = msg.indexOf('b');
       index2 = msg.indexOf('c');
-      float c = float(msg.substring(index1+1,index2-1));
+      float c = float(msg.substring(index1+1,index2));
       index1 = msg.indexOf('c'); 
       index2 = msg.indexOf('x');
-      float x = float(msg.substring(index1+1,index2-1));
+      float x = float(msg.substring(index1+1,index2));
       index1 = msg.indexOf('x');
       index2 = msg.indexOf('y');
-      float y = float(msg.substring(index1+1,index2-1));
+      float y = float(msg.substring(index1+1,index2));
       index1 = msg.indexOf('y');
       index2 = msg.indexOf(']');
-      float z = float(msg.substring(index1+1,index2-1));
+      float z = float(msg.substring(index1+1,index2));
       if(id.equals(myip) == false){
         bullets.add(new projectile(new PVector(a,b,c),new PVector(x,y,z),0));
       }
@@ -440,7 +462,7 @@ void actonmessage(String msg){
     song.play();
   }else if(st.equals("v")){ //("v" + str(points) + "r" + str(round) + "z");
     if(ishosting == false){
-      points = float(msg.substring(msg.indexOf('v')+1,msg.indexOf('r')-1));
+      points = float(msg.substring(msg.indexOf('v')+1,msg.indexOf('r')));
       round = int(msg.substring(msg.indexOf('r')+1,msg.indexOf(']')));
     }
   }else if(st.equals("e")){
@@ -457,13 +479,13 @@ void actonmessage(String msg){
     float id = float(msg.substring(index1+1,index2));
     index1 = msg.indexOf('i');
     index2 = msg.indexOf('x');
-    float x = float(msg.substring(index1+1,index2-1));
+    float x = float(msg.substring(index1+1,index2));
     index1 = msg.indexOf('x');
     index2 = msg.indexOf('y');
-    float y = float(msg.substring(index1+1,index2-1));
+    float y = float(msg.substring(index1+1,index2));
     index1 = msg.indexOf('y');
     index2 = msg.indexOf(']');
-    float z = float(msg.substring(index1+1,index2-1));
+    float z = float(msg.substring(index1+1,index2));
     boolean f = false;
     for(int i = 0; i < barriers.size(); i++){
       if(barriers.get(i).id == id){
@@ -477,7 +499,7 @@ void actonmessage(String msg){
   }else if(st.equals("u")){
     int index1 = msg.indexOf('u');
     int index2 = msg.indexOf(']');
-    String ip = msg.substring(index1+1,index2-1);
+    String ip = msg.substring(index1+1,index2);
     for(int i = 0; i < clients.size(); i++){
       if(ip.equals(clients.get(i).ip)){
         println("DEAD");
@@ -487,7 +509,7 @@ void actonmessage(String msg){
   }else if(st.equals("l")){
     int index1 = msg.indexOf('l');
     int index2 = msg.indexOf(']');
-    String ip = msg.substring(index1+1,index2-1);
+    String ip = msg.substring(index1+1,index2);
     for(int i = clients.size()-1; i > -1; i--){
       if(ip.equals(clients.get(i).ip)){
         clients.remove(i);
@@ -504,6 +526,50 @@ void actonmessage(String msg){
       playerc current = clients.get(i);
       if(current.ip.equals(ip)){
         current.kills = kills;
+      }
+    }
+  }else if(st.equals("t")){
+    int serverseed = int(msg.substring(1,msg.length()-1));
+    println(serverseed,msg);
+    if(seed != serverseed){
+      seed = serverseed;
+      noiseSeed(seed);
+      println("Seed change!");
+      trees = new PVector[10000];
+      c = new chunk(new PVector(0,0));
+    }
+  }else if(st.equals("b")){//msg = "q" + str(id) + "i" + str(pos.x) + "x" + str(pos.y) + "y" + str(pos.z) + "z";
+    int index1 = msg.indexOf('b');
+    int index2 = msg.indexOf('i');
+    float id = float(msg.substring(index1+1,index2));
+    index1 = msg.indexOf('i');
+    index2 = msg.indexOf('x');
+    float x = float(msg.substring(index1+1,index2));
+    index1 = msg.indexOf('x');
+    index2 = msg.indexOf('y');
+    float y = float(msg.substring(index1+1,index2));
+    index1 = msg.indexOf('y');
+    index2 = msg.indexOf(']');
+    float z = float(msg.substring(index1+1,index2));
+    boolean f = false;
+    for(int i = 0; i < towers.size(); i++){
+      if(towers.get(i).id == id){
+        f = true;
+      }
+    }
+    if(f == false){
+      towers.add(new tower(new PVector(x,y,z),0,id));
+      points-=200;
+    }
+  }else if(st.equals("a")){
+    float id = float(msg.substring(msg.indexOf('a')+1,msg.indexOf(']')));
+    for(int i = 0; i < towers.size(); i++){
+      if(id == towerid){
+        intower = false;
+      }
+      if(towers.get(i).id == id){
+        towers.remove(i);
+        i--;
       }
     }
   }else{
@@ -526,7 +592,9 @@ void manageserver(){
     server.write(msg.readString());
     msg = server.available();
   }
-  updatezombiepositions();
+  if(frameCount%5==0){
+    updatezombiepositions();
+  }
 }
 
 void drawplayers(){

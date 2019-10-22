@@ -23,8 +23,8 @@ void setupweapons(){
   weapons[2][0] = sniper1;
   weapons[2][1] = sniper2;
   createweapon(0,40,0.25,30,16,0.75);
-  createweapon(1,20,0.075,30,60,0.25);
-  createweapon(2,200,0.9,40,8,1.25);
+  createweapon(1,20,0.125,30,60,0.25);
+  createweapon(2,200,0.6,40,8,1.0);
 }
 void createweapon(int index, int damage, float firerate, float bulletspeed, float bulletcount, float reloadtimer){
   weaponstats[index][0] = damage;

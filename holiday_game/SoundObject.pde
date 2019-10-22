@@ -14,7 +14,10 @@ class soundobject{
     calculate();
   }
   void calculate(){
-    float d = (scale/dist(player.x,player.y,player.z,pos.x,pos.y,pos.z))*1.0;
+    float d = (1.0/(dist(player.x,player.y,player.z,pos.x,pos.y,pos.z)/(scale*12.5)))*1.0;
+    if(d > 1){
+      d = 1.0;
+    }
     sound.amp(d);
     PVector vecto = vectortowards(pos,player);
     PVector left = new PVector(vecto.x*leftear.x,vecto.y*leftear.y,vecto.z*leftear.z);

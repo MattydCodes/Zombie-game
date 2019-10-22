@@ -2,7 +2,7 @@ PGraphics d3;
 int w = 500;
 int radius = 225;
 float scale = 8;
-float rate = 4;
+float rate = 3.8;
 float depth = 100;
 color grass = color(64, 227, 102);
 color rock = color(122, 112, 103);
@@ -103,7 +103,7 @@ class chunk{
     int count = 0;
     for(int x = 0; x < w; x+=5){
       for(int y = 0; y < w; y+=5){
-        if(nval(x*1000,y*1000)/depth > 0.5 && dist(x,y,w/2,w/2) < radius){
+        if(nval(x*1000,y*1000)/depth > 0.4 && dist(x,y,w/2,w/2) < radius){
           trees[count] = new PVector(x*scale,y*scale);
           count++;
           float h = values[x][y]-1;
@@ -189,9 +189,14 @@ void bullethittree(int index, int count){
   particlesystems.add(new particlesystem(new PVector(trees[index].x,trees[index].y,trees[index].z+5),new PVector(0,0,5),0.025,0.01,color(194, 100, 0),10,count,4,(count-(count-1))));            
 }
 float nval(float x, float y){
-  float h = noise(x/w*rate,y/w*rate);
-  h*=h*0.9;
-  h*=depth*0.8;
-  h+=noise(x/w*rate,y/w*rate)*depth*0.15 + noise(x/w*rate,y/w*rate)*depth*0.05;
-  return h;
+  float h2 = noise(x/w*rate*3,y/w*rate*3);
+  h2*=h2*(h2+0.35);
+  h2*=0.15;  
+  float h3 = noise(x/w*rate*9,y/w*rate*9);
+  h3*=h3*(h3+0.4);
+  h3*=0.035;  
+  float h1 = noise(x/w*rate,y/w*rate);
+  h1*=h1*(h1+(h2+h3)/8.0);
+  h1*=0.825;
+  return (h1+h2+h3)*depth;
 }

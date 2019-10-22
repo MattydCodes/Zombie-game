@@ -32,7 +32,7 @@ class zombie{
     timer = random(0.1);
   }
   void move(){
-    if(random(zombies.size()/3.0*100) < 1){
+    if(random(zombies.size()/1.5*200) < 1){
       if(zombiesound[zombsound].isPlaying()){ 
         zombiesound[zombsound].stop();
       }
@@ -161,7 +161,7 @@ PShape loadshape(String pathm, String textm){
 void managezombies(){
   if(zombies.size() == 0){
     rounddelay++;
-    if(rounddelay > 300){
+    if(rounddelay > 360){
       round++;
       if(round > 3){
         zombspeed = 1.25+round*0.05;
@@ -191,10 +191,10 @@ void managezombies(){
 }
 
 void movezombies(){
-  if(round > 3){
-    zombspeed = 1.25+round*0.05;
+  if(round > 5){
+    zombspeed = 1.15+round*0.025;
   }else{
-    zombspeed = 0.75+round*0.05;
+    zombspeed = 0.55+round*0.05;
   }
   for(int i = zombies.size()-1; i > -1; i--){
     zombie current = zombies.get(i);
@@ -203,6 +203,16 @@ void movezombies(){
     if(current.hp <= 0){
       deathparticles(current.pos);
       zombies.remove(i);
+    }
+  }
+}
+
+void removedeadzombies(){
+  for(int i = zombies.size()-1; i > -1; i--){
+    for(int j = 0; j < corpses.size(); j++){
+      if(zombies.get(i).id == corpses.get(j).id){
+        zombies.remove(i);
+      }
     }
   }
 }

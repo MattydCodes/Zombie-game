@@ -44,9 +44,9 @@ public void setup(){
   for(int i = 0; i < zombiesound.length; i++){
     zombiesound[i] = new SoundFile(this,"data/sounds/zomb" + str(round(random(1,5))) + ".wav"); 
   }
-  song.amp(0.1f);
+  song.amp(0.07f);
   setupbullet();
-  seed = 50;
+  seed = PApplet.parseInt(random(1000));
   noiseSeed(seed);
   trees = new PVector[10000];
   c = new chunk(new PVector(0,0));
@@ -59,6 +59,9 @@ public void setup(){
   barrel[0] = loadshape("data/barrel1.obj","data/Barreltext.png");
   barrel[0].rotateX(PI/2);
   barrel[0].scale(2);
+  towerm[0] = loadshape("data/watchtower1.obj","data/towertext1.png");
+  towerm[0].rotateX(PI/2);
+  towerm[0].scale(2);  
   pmodel = loadshape("data/playermodel.obj","data/playertext.png");
   pmodel.rotateX(PI/2);
   pmodel.rotateZ(PI);
@@ -144,12 +147,15 @@ public void draw3d(){
   }else{
     movezombies();
   }
+  removedeadzombies();
   managebarriers();
+  managetowers();
   managecorpses();
   manageparticles();
   drawplayers();
   if(alive){
     showbarrel();
+    showtower();
     cam();
     displayweapon();
   }else{
@@ -190,7 +196,7 @@ class barrier{
     pos = pos_.copy();
     type = type_;
     if(type == 0){
-      hp = 1000;
+      hp = 750;
     }
     id = id_;
   }
@@ -198,13 +204,13 @@ class barrier{
     for(int i = 0; i < zombies.size(); i++){
       zombie current = zombies.get(i);
       float d = dist(current.pos.x,current.pos.y,pos.x,pos.y);
-      if(d < 40){
+      if(d < 20){
         PVector restrict = vectortowards(pos,current.pos);
         float t = 9*1.0f/(sqrt(pow(restrict.x,2)+pow(restrict.y,2)));
-        current.pos.x = lerp(current.pos.x,current.pos.x+restrict.x*zombspeed/speed*t,(1.0f-d/40.0f));
-        current.pos.y = lerp(current.pos.y,current.pos.y+restrict.y*zombspeed/speed*t,(1.0f-d/40.0f));
+        current.pos.x = lerp(current.pos.x,current.pos.x+restrict.x*zombspeed/speed*t,(1.0f-d/20.0f));
+        current.pos.y = lerp(current.pos.y,current.pos.y+restrict.y*zombspeed/speed*t,(1.0f-d/20.0f));
         if(ishosting){
-          hp-=0.5f*(20.0f/round);
+          hp-=0.5f*(round/20.0f);
         }
       }
     }
@@ -502,7 +508,7 @@ public void createmyip(){
 
 public void setupserver(){
   server = new Server(this,port);
-  //serverip = server.ip();
+  serverip = server.ip();
   client = new Client(this,serverip,port);
 }
 
@@ -513,10 +519,10 @@ public void setupclient(){
 
 public void serverEvent(Server someServer, Client someClient) {
   println("New connection: " + someClient.ip());
-  if(frameCount%2 == 0){
-    updatezombiepositions();
-    refreshbarriers();
-  }
+  updatezombiepositions();
+  refreshbarriers();
+  refreshtowers();
+  server.write(sendseed(seed));
 }
 
 public void joinServer(String ip_,int port_){
@@ -621,12 +627,22 @@ public String createbmessage(String ip,PVector pos, PVector vel){
 }
 
 public String removebarrier(float id){
-  String msg = "e" + str(id) + "]";
+  String msg = "e" + str(id) + "]"; //Used:pmcdoequlntsva   Available: bfghijkruwxyz
+  return msg;
+}
+
+public String removetower(float id){
+  String msg = "a" + str(id) + "]";
   return msg;
 }
 
 public String placebarrier(float id, PVector pos){
   String msg = "q" + str(id) + "i" + str(pos.x) + "x" + str(pos.y) + "y" + str(pos.z) + "]";
+  return msg;
+}
+
+public String placetower(float id, PVector pos){
+  String msg = "b" + str(id) + "i" + str(pos.x) + "x" + str(pos.y) + "y" + str(pos.z) + "]";
   return msg;
 }
 
@@ -640,6 +656,10 @@ public String disconnect(String ip){
 
 public String killsreport(String ip, int killc){
   return "n" + ip + "i" + str(killc) + "]";
+}
+
+public String sendseed(int sed){
+  return "t" + str(sed) + "]";
 }
 
 public void playthesong(){
@@ -713,7 +733,7 @@ public void actonmessage(String msg){
       float y = PApplet.parseFloat(msg.substring(index1+1,index2));
       index1 = msg.indexOf('%'); 
       index2 = msg.indexOf(']'); //z
-      float z = PApplet.parseFloat(msg.substring(index1+1,index2-1));
+      float z = PApplet.parseFloat(msg.substring(index1+1,index2));
       clients.add(new playerc(new PVector(x,y,z),ip));
       playerc current = clients.get(clients.size()-1);
       current.rotx = a;
@@ -774,11 +794,12 @@ public void actonmessage(String msg){
       current.wpnstate = e;
       current.sht = f;
       current.lifetime = 180;
-      //current.name = name;
+      current.name = name;
       current.nametext.setTexture(current.createtexture());
     }
   }else if(st.equals("m")){
     boolean foundz = false;
+    boolean isdead = false;
     int j = 0;
     int index = msg.indexOf('i');
     int id = PApplet.parseInt(msg.substring(1,index));
@@ -789,29 +810,36 @@ public void actonmessage(String msg){
         break;
       }
     }
-    if(foundz == false){
+    for(int n = 0; n < corpses.size(); n++){
+      corpse current = corpses.get(n);
+      if(current.id == id){
+        isdead = true;
+        break;
+      }
+    }
+    if(foundz == false && isdead == false){
       int index1 = msg.indexOf('i'); 
       int index2 = msg.indexOf('x');
-      float x = PApplet.parseFloat(msg.substring(index1+1,index2-1));
+      float x = PApplet.parseFloat(msg.substring(index1+1,index2));
       index1 = msg.indexOf('x');
       index2 = msg.indexOf('y');
-      float y = PApplet.parseFloat(msg.substring(index1+1,index2-1));
+      float y = PApplet.parseFloat(msg.substring(index1+1,index2));
       index1 = msg.indexOf('y');;
       index2 = msg.indexOf(']');
-      float z = PApplet.parseFloat(msg.substring(index1+1,index2-1));
+      float z = PApplet.parseFloat(msg.substring(index1+1,index2));
       zombies.add(new zombie(new PVector(x,y,z),PApplet.parseInt(id),100));
-    }else{
+    }else if(isdead == false){
       zombie current = zombies.get(j);
       if(current.hp > 0){
         int index1 = msg.indexOf('i');
         int index2 = msg.indexOf('x');
-        float x = PApplet.parseFloat(msg.substring(index1+1,index2-1));
+        float x = PApplet.parseFloat(msg.substring(index1+1,index2));
         index1 = index2;
         index2 = msg.indexOf('y');
-        float y = PApplet.parseFloat(msg.substring(index1+1,index2-1));
+        float y = PApplet.parseFloat(msg.substring(index1+1,index2));
         index1 = index2;
         index2 = msg.indexOf(']');
-        float z = PApplet.parseFloat(msg.substring(index1+1,index2-1));
+        float z = PApplet.parseFloat(msg.substring(index1+1,index2));
         current.pos.x = x;
         current.pos.y = y;
         current.pos.z = z;
@@ -820,19 +848,19 @@ public void actonmessage(String msg){
   }else if(st.equals("c")){
       int index1 = msg.indexOf('c');
       int index2 = msg.indexOf('i');
-      int id = PApplet.parseInt(msg.substring(index1+1,index2-1));
+      int id = PApplet.parseInt(msg.substring(index1+1,index2));
       index1 = msg.indexOf('i');
       index2 = msg.indexOf('r');
-      float rot = PApplet.parseFloat(msg.substring(index1+1,index2-1));
+      float rot = PApplet.parseFloat(msg.substring(index1+1,index2));
       index1 = msg.indexOf('r'); 
       index2 = msg.indexOf('x');
-      float x = PApplet.parseFloat(msg.substring(index1+1,index2-1));
+      float x = PApplet.parseFloat(msg.substring(index1+1,index2));
       index1 = msg.indexOf('x');
       index2 = msg.indexOf('y');
-      float y = PApplet.parseFloat(msg.substring(index1+1,index2-1));
+      float y = PApplet.parseFloat(msg.substring(index1+1,index2));
       index1 = msg.indexOf('y');
       index2 = msg.indexOf(']');
-      float z = PApplet.parseFloat(msg.substring(index1+1,index2-1));
+      float z = PApplet.parseFloat(msg.substring(index1+1,index2));
       boolean f = false;
       for(int i = 0; i < corpses.size(); i++){
         if(corpses.get(i).id == id){
@@ -848,7 +876,7 @@ public void actonmessage(String msg){
     int id = PApplet.parseInt(msg.substring(index1+1,index2));
     index1 = msg.indexOf('h');
     index2 = msg.indexOf(']');
-    float hp = PApplet.parseFloat(msg.substring(index1+1,index2-1));
+    float hp = PApplet.parseFloat(msg.substring(index1+1,index2));
     for(int i = 0; i < zombies.size(); i++){
       zombie current = zombies.get(i);
       if(current.id == id){
@@ -863,22 +891,22 @@ public void actonmessage(String msg){
       String id = msg.substring(index1+1,index2);
       index1 = msg.indexOf('i');
       index2 = msg.indexOf('a');
-      float a = PApplet.parseFloat(msg.substring(index1+1,index2-1));
+      float a = PApplet.parseFloat(msg.substring(index1+1,index2));
       index1 = msg.indexOf('a');
       index2 = msg.indexOf('b');
-      float b = PApplet.parseFloat(msg.substring(index1+1,index2-1));
+      float b = PApplet.parseFloat(msg.substring(index1+1,index2));
       index1 = msg.indexOf('b');
       index2 = msg.indexOf('c');
-      float c = PApplet.parseFloat(msg.substring(index1+1,index2-1));
+      float c = PApplet.parseFloat(msg.substring(index1+1,index2));
       index1 = msg.indexOf('c'); 
       index2 = msg.indexOf('x');
-      float x = PApplet.parseFloat(msg.substring(index1+1,index2-1));
+      float x = PApplet.parseFloat(msg.substring(index1+1,index2));
       index1 = msg.indexOf('x');
       index2 = msg.indexOf('y');
-      float y = PApplet.parseFloat(msg.substring(index1+1,index2-1));
+      float y = PApplet.parseFloat(msg.substring(index1+1,index2));
       index1 = msg.indexOf('y');
       index2 = msg.indexOf(']');
-      float z = PApplet.parseFloat(msg.substring(index1+1,index2-1));
+      float z = PApplet.parseFloat(msg.substring(index1+1,index2));
       if(id.equals(myip) == false){
         bullets.add(new projectile(new PVector(a,b,c),new PVector(x,y,z),0));
       }
@@ -898,7 +926,7 @@ public void actonmessage(String msg){
     song.play();
   }else if(st.equals("v")){ //("v" + str(points) + "r" + str(round) + "z");
     if(ishosting == false){
-      points = PApplet.parseFloat(msg.substring(msg.indexOf('v')+1,msg.indexOf('r')-1));
+      points = PApplet.parseFloat(msg.substring(msg.indexOf('v')+1,msg.indexOf('r')));
       round = PApplet.parseInt(msg.substring(msg.indexOf('r')+1,msg.indexOf(']')));
     }
   }else if(st.equals("e")){
@@ -915,13 +943,13 @@ public void actonmessage(String msg){
     float id = PApplet.parseFloat(msg.substring(index1+1,index2));
     index1 = msg.indexOf('i');
     index2 = msg.indexOf('x');
-    float x = PApplet.parseFloat(msg.substring(index1+1,index2-1));
+    float x = PApplet.parseFloat(msg.substring(index1+1,index2));
     index1 = msg.indexOf('x');
     index2 = msg.indexOf('y');
-    float y = PApplet.parseFloat(msg.substring(index1+1,index2-1));
+    float y = PApplet.parseFloat(msg.substring(index1+1,index2));
     index1 = msg.indexOf('y');
     index2 = msg.indexOf(']');
-    float z = PApplet.parseFloat(msg.substring(index1+1,index2-1));
+    float z = PApplet.parseFloat(msg.substring(index1+1,index2));
     boolean f = false;
     for(int i = 0; i < barriers.size(); i++){
       if(barriers.get(i).id == id){
@@ -935,7 +963,7 @@ public void actonmessage(String msg){
   }else if(st.equals("u")){
     int index1 = msg.indexOf('u');
     int index2 = msg.indexOf(']');
-    String ip = msg.substring(index1+1,index2-1);
+    String ip = msg.substring(index1+1,index2);
     for(int i = 0; i < clients.size(); i++){
       if(ip.equals(clients.get(i).ip)){
         println("DEAD");
@@ -945,7 +973,7 @@ public void actonmessage(String msg){
   }else if(st.equals("l")){
     int index1 = msg.indexOf('l');
     int index2 = msg.indexOf(']');
-    String ip = msg.substring(index1+1,index2-1);
+    String ip = msg.substring(index1+1,index2);
     for(int i = clients.size()-1; i > -1; i--){
       if(ip.equals(clients.get(i).ip)){
         clients.remove(i);
@@ -962,6 +990,50 @@ public void actonmessage(String msg){
       playerc current = clients.get(i);
       if(current.ip.equals(ip)){
         current.kills = kills;
+      }
+    }
+  }else if(st.equals("t")){
+    int serverseed = PApplet.parseInt(msg.substring(1,msg.length()-1));
+    println(serverseed,msg);
+    if(seed != serverseed){
+      seed = serverseed;
+      noiseSeed(seed);
+      println("Seed change!");
+      trees = new PVector[10000];
+      c = new chunk(new PVector(0,0));
+    }
+  }else if(st.equals("b")){//msg = "q" + str(id) + "i" + str(pos.x) + "x" + str(pos.y) + "y" + str(pos.z) + "z";
+    int index1 = msg.indexOf('b');
+    int index2 = msg.indexOf('i');
+    float id = PApplet.parseFloat(msg.substring(index1+1,index2));
+    index1 = msg.indexOf('i');
+    index2 = msg.indexOf('x');
+    float x = PApplet.parseFloat(msg.substring(index1+1,index2));
+    index1 = msg.indexOf('x');
+    index2 = msg.indexOf('y');
+    float y = PApplet.parseFloat(msg.substring(index1+1,index2));
+    index1 = msg.indexOf('y');
+    index2 = msg.indexOf(']');
+    float z = PApplet.parseFloat(msg.substring(index1+1,index2));
+    boolean f = false;
+    for(int i = 0; i < towers.size(); i++){
+      if(towers.get(i).id == id){
+        f = true;
+      }
+    }
+    if(f == false){
+      towers.add(new tower(new PVector(x,y,z),0,id));
+      points-=200;
+    }
+  }else if(st.equals("a")){
+    float id = PApplet.parseFloat(msg.substring(msg.indexOf('a')+1,msg.indexOf(']')));
+    for(int i = 0; i < towers.size(); i++){
+      if(id == towerid){
+        intower = false;
+      }
+      if(towers.get(i).id == id){
+        towers.remove(i);
+        i--;
       }
     }
   }else{
@@ -984,7 +1056,9 @@ public void manageserver(){
     server.write(msg.readString());
     msg = server.available();
   }
-  updatezombiepositions();
+  if(frameCount%5==0){
+    updatezombiepositions();
+  }
 }
 
 public void drawplayers(){
@@ -1023,8 +1097,8 @@ public void setupweapons(){
   weapons[2][0] = sniper1;
   weapons[2][1] = sniper2;
   createweapon(0,40,0.25f,30,16,0.75f);
-  createweapon(1,20,0.075f,30,60,0.25f);
-  createweapon(2,200,0.9f,40,8,1.25f);
+  createweapon(1,20,0.125f,30,60,0.25f);
+  createweapon(2,200,0.6f,40,8,1.0f);
 }
 public void createweapon(int index, int damage, float firerate, float bulletspeed, float bulletcount, float reloadtimer){
   weaponstats[index][0] = damage;
@@ -1063,7 +1137,10 @@ class soundobject{
     calculate();
   }
   public void calculate(){
-    float d = (scale/dist(player.x,player.y,player.z,pos.x,pos.y,pos.z))*1.0f;
+    float d = (1.0f/(dist(player.x,player.y,player.z,pos.x,pos.y,pos.z)/(scale*12.5f)))*1.0f;
+    if(d > 1){
+      d = 1.0f;
+    }
     sound.amp(d);
     PVector vecto = vectortowards(pos,player);
     PVector left = new PVector(vecto.x*leftear.x,vecto.y*leftear.y,vecto.z*leftear.z);
@@ -1117,7 +1194,7 @@ public void drawui(){
   ui.textSize(20);
   ui.text("Score : " + PApplet.parseInt(points),50,80);
   ui.textSize(40);
-  ui.fill(255,10,10);
+  ui.fill(255,10,10,255-sin(radians(rounddelay*2))*245.0f);
   ui.text("Round : " + PApplet.parseInt(round),45,40);
   if(started == false && ishosting){
     ui.fill(255,50,50);
@@ -1127,6 +1204,91 @@ public void drawui(){
   }
   ui.endDraw();
   image(ui,0,0,width,height);
+}
+PShape[] towerm = new PShape[1];
+ArrayList<tower> towers = new ArrayList<tower>();
+class tower{
+  PVector pos;
+  float hp;
+  int type = 0;
+  float id;
+  tower(PVector pos_, int type_, float id_){
+    pos = pos_.copy();
+    type = type_;
+    if(type == 0){
+      hp = 1000;
+    }
+    id = id_;
+  }
+  public void update(){
+    for(int i = 0; i < zombies.size(); i++){
+      zombie current = zombies.get(i);
+      float d = dist(current.pos.x,current.pos.y,pos.x,pos.y);
+      if(d < 20){
+        PVector restrict = vectortowards(pos,current.pos);
+        float t = 9*1.0f/(sqrt(pow(restrict.x,2)+pow(restrict.y,2)));
+        current.pos.x = lerp(current.pos.x,current.pos.x+restrict.x*zombspeed/speed*t,(1.0f-d/20.0f));
+        current.pos.y = lerp(current.pos.y,current.pos.y+restrict.y*zombspeed/speed*t,(1.0f-d/20.0f));
+        if(ishosting){
+          hp-=0.5f*(round/20.0f);
+        }
+      }
+    }
+    float d = dist(player.x,player.y,player.z,pos.x,pos.y,pos.z);
+    if(d < 20){
+      PVector restrict = vectortowards(pos,player);
+      float t = 9*1.0f/(sqrt(pow(restrict.x,2)+pow(restrict.y,2)+pow(restrict.z,2)));   
+      player.x = lerp(player.x,player.x+restrict.x*movespeed/speed*t,(1.0f-d/20.0f));
+      player.y = lerp(player.y,player.y+restrict.y*movespeed/speed*t,(1.0f-d/20.0f));
+      player.z = lerp(player.z,player.z+restrict.y*movespeed/speed*t,(1.0f-d/20.0f));
+      fall-=restrict.z*0.25f;
+    }
+    if(d < 25 && keys[4] == 1){
+      intower = true;
+      towerbox = pos.copy().add(0.0f,0.0f,93);
+    }
+  }
+  public void display(){
+    d3.translate(pos.x,pos.y,pos.z);
+    d3.shape(towerm[type]);
+    d3.translate(-pos.x,-pos.y,-pos.z);
+  }
+}
+public void managetowers(){
+  for(int i = towers.size()-1; i > -1; i--){
+    tower current = towers.get(i);
+    current.update();
+    current.display();
+    if(current.hp <= 0 && ishosting){
+      client.write(removetower(current.id));
+    }
+  }
+}
+
+public void placetower(PVector pos){
+  pos = pos.copy();
+  pos.z = nval(pos.x/scale,pos.y/scale)*scale+15;
+  pos.x = round(pos.x/10)*10;
+  pos.y = round(pos.y/10)*10;
+  client.write(placetower(random(10000),pos));
+}
+
+public void showtower(){
+  if(keys[8] == 1 && points >= 200){
+    PVector vec = player.copy().add(new PVector(cos(radians(mouse.x))*40,sin(radians(mouse.x))*40,0));
+    vec.x = round(vec.x/10)*10;
+    vec.y = round(vec.y/10)*10;
+    vec.z = nval(vec.x/scale,vec.y/scale)*scale+40;
+    d3.translate(vec.x,vec.y,vec.z);
+    d3.shape(towerm[0]);
+    d3.resetMatrix();
+  }
+}
+
+public void refreshtowers(){
+  for(int i = 0; i < towers.size(); i++){
+    client.write(placetower(towers.get(i).id,towers.get(i).pos));
+  }
 }
 ArrayList<corpse> corpses = new ArrayList<corpse>();
 int duration = 300;
@@ -1226,10 +1388,13 @@ public void managedrops(){
     current.display();
   }
 }
-int[] keys = new int[8];
+int[] keys = new int[9];
 float movespeed = 2;
 float speed = 0;
 float fall = 0;
+boolean intower = false;
+PVector towerbox = new PVector(0,0,0);
+int towerid = 0;
 public void move(){
   if(health <= 0){
     alive = false;
@@ -1272,45 +1437,68 @@ public void move(){
     player.x+=cos(radians(mouse.x+90))*movespeed/speed;
     player.y+=sin(radians(mouse.x+90))*movespeed/speed;
   }
-  if(player.z <= nval(player.x/scale,player.y/scale)*scale+30){
-    player.z = lerp(player.z,nval(player.x/scale,player.y/scale)*scale+20,0.35f);
-    fall = 0;
-    if(keys[6] == 1){
-      fall = -2;
-      player.z+=11;
+  if(intower){
+    if(player.z <= towerbox.z){
+      player.z = lerp(player.z,towerbox.z,0.35f);
+      fall = 0;
+      if(keys[6] == 1){
+        fall = -2;
+        player.z+=1;
+      }
+    }else if(player.z >= towerbox.z+10){
+      player.z = towerbox.z+9.9f;
+      fall = 0;
+    }else{
+      fall+=0.14f;
+      player.z-=fall;
+    }
+    if(dist(player.x,player.y,towerbox.x,towerbox.y) > 18){
+      PVector restrict = vectortowards(player,towerbox);
+      float t = 1.0f/(sqrt(pow(restrict.x,2)+pow(restrict.y,2)));
+      player.x = lerp(player.x,player.x+restrict.x*movespeed/speed*t,1*constrain((dist(player.x,player.y,towerbox.x,towerbox.y)-18),0,2));        
+      player.y = lerp(player.y,player.y+restrict.y*movespeed/speed*t,1*constrain((dist(player.x,player.y,towerbox.x,towerbox.y)-18),0,2));
     }
   }else{
-    fall+=0.14f;
-    player.z-=fall;
-  }
-  if(dist(player.x,player.y,w/2.0f*scale,w/2.0f*scale) > (radius-54)*scale){
-    PVector restrict = vectortowards(player,new PVector(w/2.0f*scale,w/2.0f*scale));
-    float t = 1.0f/(sqrt(pow(restrict.x,2)+pow(restrict.y,2)));
-    player.x = lerp(player.x,player.x+restrict.x*movespeed/speed*t,1*constrain((dist(player.x,player.y,w/2.0f*scale,w/2.0f*scale)-((radius-54)*scale)),0,2));        
-    player.y = lerp(player.y,player.y+restrict.y*movespeed/speed*t,1*constrain((dist(player.x,player.y,w/2.0f*scale,w/2.0f*scale)-((radius-54)*scale)),0,2));
-  }
-  for(int i = 0; i < zombies.size(); i++){
-    zombie current = zombies.get(i);
-    float d = dist(player.x,player.y,player.z,current.pos.x,current.pos.y,current.pos.z);
-    if(d < 30){
-      PVector restrict = vectortowards(current.pos,player);
-      float t = 3*1.0f/(sqrt(pow(restrict.x,2)+pow(restrict.y,2)+pow(restrict.z,2)));     
-      player.x = lerp(player.x,player.x+restrict.x*movespeed/speed*t,3.0f-d/10.0f);
-      player.y = lerp(player.y,player.y+restrict.y*movespeed/speed*t,3.0f-d/10.0f);
-      player.z = lerp(player.z,player.z+restrict.z*movespeed/speed*t,3.0f-d/10.0f);
-      fall-=restrict.z*0.1f;
+    if(player.z <= nval(player.x/scale,player.y/scale)*scale+30){
+      player.z = lerp(player.z,nval(player.x/scale,player.y/scale)*scale+20,0.35f);
+      fall = 0;
+      if(keys[6] == 1){
+        fall = -2;
+        player.z+=11;
+      }
+    }else{
+      fall+=0.14f;
+      player.z-=fall;
+    }
+    if(dist(player.x,player.y,w/2.0f*scale,w/2.0f*scale) > (radius-54)*scale){
+      PVector restrict = vectortowards(player,new PVector(w/2.0f*scale,w/2.0f*scale));
+      float t = 1.0f/(sqrt(pow(restrict.x,2)+pow(restrict.y,2)));
+      player.x = lerp(player.x,player.x+restrict.x*movespeed/speed*t,1*constrain((dist(player.x,player.y,w/2.0f*scale,w/2.0f*scale)-((radius-54)*scale)),0,2));        
+      player.y = lerp(player.y,player.y+restrict.y*movespeed/speed*t,1*constrain((dist(player.x,player.y,w/2.0f*scale,w/2.0f*scale)-((radius-54)*scale)),0,2));
+    }
+    for(int i = 0; i < zombies.size(); i++){
+      zombie current = zombies.get(i);
+      float d = dist(player.x,player.y,player.z,current.pos.x,current.pos.y,current.pos.z);
+      if(d < 30){
+        PVector restrict = vectortowards(current.pos,player);
+        float t = 3*1.0f/(sqrt(pow(restrict.x,2)+pow(restrict.y,2)+pow(restrict.z,2)));     
+        player.x = lerp(player.x,player.x+restrict.x*movespeed/speed*t,3.0f-d/10.0f);
+        player.y = lerp(player.y,player.y+restrict.y*movespeed/speed*t,3.0f-d/10.0f);
+        player.z = lerp(player.z,player.z+restrict.z*movespeed/speed*t,3.0f-d/10.0f);
+        fall-=restrict.z*0.1f;
+      }
     }
   }
   for(int i = 0; i < clients.size(); i++){
     if(clients.get(i).ip.equals(myip) == false){
       playerc current = clients.get(i);
       float d = dist(player.x,player.y,player.z,current.pos.x,current.pos.y,current.pos.z);
-      if(d < 30){
+      if(d < 15){
         PVector restrict = vectortowards(current.pos,player);
         float t = 3*1.0f/(sqrt(pow(restrict.x,2)+pow(restrict.y,2)+pow(restrict.z,2)));   
-        player.x = lerp(player.x,player.x+restrict.x*movespeed/speed*t,3.0f-d/10.0f);
-        player.y = lerp(player.y,player.y+restrict.y*movespeed/speed*t,3.0f-d/10.0f);
-        player.z = lerp(player.z,player.z+restrict.y*movespeed/speed*t,3.0f-d/10.0f);
+        player.x = lerp(player.x,player.x+restrict.x*movespeed/speed*t,1.5f-d/10.0f);
+        player.y = lerp(player.y,player.y+restrict.y*movespeed/speed*t,1.5f-d/10.0f);
+        player.z = lerp(player.z,player.z+restrict.y*movespeed/speed*t,1.5f-d/10.0f);
         fall-=restrict.z*0.1f;
       }
     }
@@ -1333,6 +1521,11 @@ public void keyPressed(){
       }
     }else if(key == 'e' || key == 'E'){
       keys[4] = 1;
+      if(intower){
+        player.x = towerbox.x;
+        player.y = towerbox.y;
+        intower = false;
+      }
     }else if(key == 'p' || key == 'P'){
       playthesong();
     }else if(keyCode == ENTER){
@@ -1370,24 +1563,31 @@ public void keyPressed(){
   }
 }
 public void keyReleased(){
-  if(key == 'w' || key == 'W'){
-    keys[0] = 0;
-  }else if(key == 's' || key == 'S'){
-    keys[1] = 0;
-  }else if(key == 'a' || key == 'A'){
-    keys[2] = 0;
-  }else if(key == 'd' || key == 'D'){
-    keys[3] = 0;
-  }else if(keyCode == 32){
-    keys[6] = 0;
-  }else if(key == 'e' || key == 'E'){
-    keys[4] = 0;
-  }else if(keyCode == 16){
-    keys[5] = 0;
-  }else if(key == 'q' || key == 'Q'){
-    keys[7] = 0;
-    if(points >= 50){
-      placebarrel(player.copy().add(new PVector(cos(radians(mouse.x))*40,sin(radians(mouse.x))*40,0)));
+  if(menu == false){
+    if(key == 'w' || key == 'W'){
+      keys[0] = 0;
+    }else if(key == 's' || key == 'S'){
+      keys[1] = 0;
+    }else if(key == 'a' || key == 'A'){
+      keys[2] = 0;
+    }else if(key == 'd' || key == 'D'){
+      keys[3] = 0;
+    }else if(keyCode == 32){
+      keys[6] = 0;
+    }else if(key == 'e' || key == 'E'){
+      keys[4] = 0;
+    }else if(keyCode == 16){
+      keys[5] = 0;
+    }else if(key == 'q' || key == 'Q'){
+      keys[7] = 0;
+      if(points >= 50){
+        placebarrel(player.copy().add(new PVector(cos(radians(mouse.x))*40,sin(radians(mouse.x))*40,0)));
+      }
+    }else if(key == 't' || key == 'T'){
+      keys[8] = 0;
+      if(points >= 200){
+        placetower(player.copy().add(new PVector(cos(radians(mouse.x))*40,sin(radians(mouse.x))*40,0)));
+      }
     }
   }
 }
@@ -1645,7 +1845,7 @@ PGraphics d3;
 int w = 500;
 int radius = 225;
 float scale = 8;
-float rate = 4;
+float rate = 3.8f;
 float depth = 100;
 int grass = color(64, 227, 102);
 int rock = color(122, 112, 103);
@@ -1746,7 +1946,7 @@ class chunk{
     int count = 0;
     for(int x = 0; x < w; x+=5){
       for(int y = 0; y < w; y+=5){
-        if(nval(x*1000,y*1000)/depth > 0.5f && dist(x,y,w/2,w/2) < radius){
+        if(nval(x*1000,y*1000)/depth > 0.4f && dist(x,y,w/2,w/2) < radius){
           trees[count] = new PVector(x*scale,y*scale);
           count++;
           float h = values[x][y]-1;
@@ -1832,11 +2032,16 @@ public void bullethittree(int index, int count){
   particlesystems.add(new particlesystem(new PVector(trees[index].x,trees[index].y,trees[index].z+5),new PVector(0,0,5),0.025f,0.01f,color(194, 100, 0),10,count,4,(count-(count-1))));            
 }
 public float nval(float x, float y){
-  float h = noise(x/w*rate,y/w*rate);
-  h*=h*0.9f;
-  h*=depth*0.8f;
-  h+=noise(x/w*rate,y/w*rate)*depth*0.15f + noise(x/w*rate,y/w*rate)*depth*0.05f;
-  return h;
+  float h2 = noise(x/w*rate*3,y/w*rate*3);
+  h2*=h2*(h2+0.35f);
+  h2*=0.15f;  
+  float h3 = noise(x/w*rate*9,y/w*rate*9);
+  h3*=h3*(h3+0.4f);
+  h3*=0.035f;  
+  float h1 = noise(x/w*rate,y/w*rate);
+  h1*=h1*(h1+(h2+h3)/8.0f);
+  h1*=0.825f;
+  return (h1+h2+h3)*depth;
 }
 boolean started = false;
 ArrayList<zombie> zombies = new ArrayList<zombie>();
@@ -1872,7 +2077,7 @@ class zombie{
     timer = random(0.1f);
   }
   public void move(){
-    if(random(zombies.size()/3.0f*100) < 1){
+    if(random(zombies.size()/1.5f*200) < 1){
       if(zombiesound[zombsound].isPlaying()){ 
         zombiesound[zombsound].stop();
       }
@@ -2001,7 +2206,7 @@ public PShape loadshape(String pathm, String textm){
 public void managezombies(){
   if(zombies.size() == 0){
     rounddelay++;
-    if(rounddelay > 300){
+    if(rounddelay > 360){
       round++;
       if(round > 3){
         zombspeed = 1.25f+round*0.05f;
@@ -2031,10 +2236,10 @@ public void managezombies(){
 }
 
 public void movezombies(){
-  if(round > 3){
-    zombspeed = 1.25f+round*0.05f;
+  if(round > 5){
+    zombspeed = 1.15f+round*0.025f;
   }else{
-    zombspeed = 0.75f+round*0.05f;
+    zombspeed = 0.55f+round*0.05f;
   }
   for(int i = zombies.size()-1; i > -1; i--){
     zombie current = zombies.get(i);
@@ -2043,6 +2248,16 @@ public void movezombies(){
     if(current.hp <= 0){
       deathparticles(current.pos);
       zombies.remove(i);
+    }
+  }
+}
+
+public void removedeadzombies(){
+  for(int i = zombies.size()-1; i > -1; i--){
+    for(int j = 0; j < corpses.size(); j++){
+      if(zombies.get(i).id == corpses.get(j).id){
+        zombies.remove(i);
+      }
     }
   }
 }
