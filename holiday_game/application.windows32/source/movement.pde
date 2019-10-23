@@ -149,6 +149,8 @@ void keyPressed(){
     }else if(keyCode == 27){
       disconnect(myip);
       exit();
+    }else if(key == '#'){
+      client = new Client(this,serverip,port);
     }
   }else{
     if(keyCode == 8){

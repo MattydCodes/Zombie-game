@@ -50,6 +50,7 @@ public void setup(){
   noiseSeed(seed);
   trees = new PVector[10000];
   c = new chunk(new PVector(0,0));
+  thread("clientdetect");
   try{
     robot = new Robot();
     robot.setAutoDelay(0);
@@ -692,23 +693,27 @@ public void updatescore(){
   client.write("v" + str(points) + "r" + str(round) + "]");
 }
 
+public void clientdetect(){
+  while(true){
+    if(client.active() == false){
+      client = new Client(this,serverip,port);
+    }
+  }
+}
+
 public void updateclient(){
-  if(!client.active()){
-    client = new Client(this,serverip,port);
-  }else{
-    if(client.available() != 0){
-      String msg = client.readString();
-      while(msg.length() != 0){
-        String submsg = msg.substring(0,msg.indexOf("]")+1);
-        actonmessage(submsg);
-        msg = msg.substring(msg.indexOf("]")+1);
-      }
+  if(client.available() != 0){
+    String msg = client.readString();
+    while(msg.length() != 0){
+      String submsg = msg.substring(0,msg.indexOf("]")+1);
+      actonmessage(submsg);
+      msg = msg.substring(msg.indexOf("]")+1);
     }
-    String snt = createmessage(myip,myname,player.copy(),mouse.copy(),reloadtimer,weapon,gunstate,shottimer,health);
-    client.write(snt);
-    if(ishosting){
-      updatescore();
-    }
+  }
+  String snt = createmessage(myip,myname,player.copy(),mouse.copy(),reloadtimer,weapon,gunstate,shottimer,health);
+  client.write(snt);
+  if(ishosting){
+    updatescore();
   }
 }
 
@@ -1579,6 +1584,8 @@ public void keyPressed(){
     }else if(keyCode == 27){
       disconnect(myip);
       exit();
+    }else if(key == '#'){
+      client = new Client(this,serverip,port);
     }
   }else{
     if(keyCode == 8){

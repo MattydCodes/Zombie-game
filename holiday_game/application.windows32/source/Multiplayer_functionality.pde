@@ -206,23 +206,27 @@ void updatescore(){
   client.write("v" + str(points) + "r" + str(round) + "]");
 }
 
+void clientdetect(){
+  while(true){
+    if(client.active() == false){
+      client = new Client(this,serverip,port);
+    }
+  }
+}
+
 void updateclient(){
-  if(!client.active()){
-    client = new Client(this,serverip,port);
-  }else{
-    if(client.available() != 0){
-      String msg = client.readString();
-      while(msg.length() != 0){
-        String submsg = msg.substring(0,msg.indexOf("]")+1);
-        actonmessage(submsg);
-        msg = msg.substring(msg.indexOf("]")+1);
-      }
+  if(client.available() != 0){
+    String msg = client.readString();
+    while(msg.length() != 0){
+      String submsg = msg.substring(0,msg.indexOf("]")+1);
+      actonmessage(submsg);
+      msg = msg.substring(msg.indexOf("]")+1);
     }
-    String snt = createmessage(myip,myname,player.copy(),mouse.copy(),reloadtimer,weapon,gunstate,shottimer,health);
-    client.write(snt);
-    if(ishosting){
-      updatescore();
-    }
+  }
+  String snt = createmessage(myip,myname,player.copy(),mouse.copy(),reloadtimer,weapon,gunstate,shottimer,health);
+  client.write(snt);
+  if(ishosting){
+    updatescore();
   }
 }
 

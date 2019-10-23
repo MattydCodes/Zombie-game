@@ -30,6 +30,7 @@ void setup(){
   noiseSeed(seed);
   trees = new PVector[10000];
   c = new chunk(new PVector(0,0));
+  thread("clientdetect");
   try{
     robot = new Robot();
     robot.setAutoDelay(0);
