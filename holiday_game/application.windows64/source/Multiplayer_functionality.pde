@@ -46,13 +46,11 @@ void setupserver(){
   server = new Server(this,port);
   serverip = server.ip();
   client = new Client(this,serverip,port);
-  thread("clientdetect");
 }
 
 void setupclient(){
   client = new Client(this,serverip,port);
   println("connected");
-  thread("clientdetect");
 }
 
 void serverEvent(Server someServer, Client someClient) {
@@ -208,25 +206,16 @@ void updatescore(){
   client.write("v" + str(points) + "r" + str(round) + "]");
 }
 
-void clientdetect(){
-  while(true){
-    if(client.active() == false){
-      client = new Client(this,serverip,port);
-    }
-    delay(100);
-  }
-}
-
 void updateclient(){
   if(client.available() != 0){
     String msg = client.readString();
-    while(msg.length() != 0){
+    while(msg.length() != 0 && msg.indexOf("]") != -1){
       String submsg = msg.substring(0,msg.indexOf("]")+1);
       actonmessage(submsg);
       msg = msg.substring(msg.indexOf("]")+1);
     }
+    client.clear();
   }
-  client.clear();
   String snt = createmessage(myip,myname,player.copy(),mouse.copy(),reloadtimer,weapon,gunstate,shottimer,health);
   client.write(snt);
   if(ishosting){

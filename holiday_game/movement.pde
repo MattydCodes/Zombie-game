@@ -149,8 +149,6 @@ void keyPressed(){
     }else if(keyCode == 27){
       disconnect(myip);
       exit();
-    }else if(key == '#'){
-      client.stop();
     }
   }else{
     if(keyCode == 8){
