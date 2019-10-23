@@ -4,7 +4,7 @@ float speed = 0;
 float fall = 0;
 boolean intower = false;
 PVector towerbox = new PVector(0,0,0);
-int towerid = 0;
+float towerid = 0;
 void move(){
   if(health <= 0){
     alive = false;
@@ -89,12 +89,12 @@ void move(){
     for(int i = 0; i < zombies.size(); i++){
       zombie current = zombies.get(i);
       float d = dist(player.x,player.y,player.z,current.pos.x,current.pos.y,current.pos.z);
-      if(d < 20){
+      if(d < 30){
         PVector restrict = vectortowards(current.pos,player);
         float t = 3*1.0/(sqrt(pow(restrict.x,2)+pow(restrict.y,2)+pow(restrict.z,2)));     
-        player.x = lerp(player.x,player.x+restrict.x*movespeed/speed*t,2.0-d/10.0);
-        player.y = lerp(player.y,player.y+restrict.y*movespeed/speed*t,2.0-d/10.0);
-        player.z = lerp(player.z,player.z+restrict.z*movespeed/speed*t,2.0-d/10.0);
+        player.x = lerp(player.x,player.x+restrict.x*movespeed/speed*t,3.0-d/10.0);
+        player.y = lerp(player.y,player.y+restrict.y*movespeed/speed*t,3.0-d/10.0);
+        player.z = lerp(player.z,player.z+restrict.z*movespeed/speed*t,3.0-d/10.0);
         fall-=restrict.z*0.1;
       }
     }
@@ -103,12 +103,12 @@ void move(){
     if(clients.get(i).ip.equals(myip) == false){
       playerc current = clients.get(i);
       float d = dist(player.x,player.y,player.z,current.pos.x,current.pos.y,current.pos.z);
-      if(d < 15){
+      if(d < 20){
         PVector restrict = vectortowards(current.pos,player);
         float t = 3*1.0/(sqrt(pow(restrict.x,2)+pow(restrict.y,2)+pow(restrict.z,2)));   
-        player.x = lerp(player.x,player.x+restrict.x*movespeed/speed*t,1.5-d/10.0);
-        player.y = lerp(player.y,player.y+restrict.y*movespeed/speed*t,1.5-d/10.0);
-        player.z = lerp(player.z,player.z+restrict.y*movespeed/speed*t,1.5-d/10.0);
+        player.x = lerp(player.x,player.x+restrict.x*movespeed/speed*t,2-d/10.0);
+        player.y = lerp(player.y,player.y+restrict.y*movespeed/speed*t,2-d/10.0);
+        player.z = lerp(player.z,player.z+restrict.y*movespeed/speed*t,2-d/10.0);
         fall-=restrict.z*0.1;
       }
     }

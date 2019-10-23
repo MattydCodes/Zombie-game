@@ -45,7 +45,7 @@ class zombie{
     }
     target = closestClient(pos);
     PVector dir = vectortowards(pos,target);
-    if(dist(target.x,target.y,target.z,pos.x,pos.y,pos.z) < 20){
+    if(dist(target.x,target.y,target.z,pos.x,pos.y,pos.z) < 30){
       attacktimer = 1.25;
     }else if(attacktimer == 0){
       if(sqrt((rot*rot)-(pow(bearing(target,pos),2))) > 180 || sqrt((rot*rot)-(pow(bearing(target,pos),2))) < -180){
@@ -79,10 +79,10 @@ class zombie{
       float d = dist(pos.x,pos.y,pos.z,current.pos.x,current.pos.y,current.pos.z);
       if(d < 25){
         PVector resist = vectortowards(current.pos,pos);
-        float t = 1.0/(sqrt(pow(resist.x,2)+pow(resist.y,2)));
-        pos.x = lerp(pos.x,pos.x+resist.x*zombspeed*t,2.5-d/10.0);
-        pos.y = lerp(pos.y,pos.y+resist.y*zombspeed*t,2.5-d/10.0);
-        pos.y = lerp(pos.z,pos.z+resist.z*zombspeed*t,2.5-d/10.0);
+        float t = 1.0/(sqrt(pow(resist.x,2)+pow(resist.y,2)+pow(resist.z,2)));
+        pos.x = lerp(pos.x,pos.x+resist.x*zombspeed*t,1.0-d/25.0);
+        pos.y = lerp(pos.y,pos.y+resist.y*zombspeed*t,1.0-d/25.0);
+        pos.z = lerp(pos.z,pos.z+resist.z*zombspeed*t,1.0-d/25.0);
       }
     }
     timer+=0.016;

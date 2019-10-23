@@ -207,18 +207,22 @@ void updatescore(){
 }
 
 void updateclient(){
-  if(client.available() != 0){
-    String msg = client.readString();
-    while(msg.length() != 0){
-      String submsg = msg.substring(0,msg.indexOf("]")+1);
-      actonmessage(submsg);
-      msg = msg.substring(msg.indexOf("]")+1);
+  if(!client.active()){
+    client = new Client(this,serverip,port);
+  }else{
+    if(client.available() != 0){
+      String msg = client.readString();
+      while(msg.length() != 0){
+        String submsg = msg.substring(0,msg.indexOf("]")+1);
+        actonmessage(submsg);
+        msg = msg.substring(msg.indexOf("]")+1);
+      }
     }
-  }
-  String snt = createmessage(myip,myname,player.copy(),mouse.copy(),reloadtimer,weapon,gunstate,shottimer,health);
-  client.write(snt);
-  if(ishosting){
-    updatescore();
+    String snt = createmessage(myip,myname,player.copy(),mouse.copy(),reloadtimer,weapon,gunstate,shottimer,health);
+    client.write(snt);
+    if(ishosting){
+      updatescore();
+    }
   }
 }
 
@@ -592,7 +596,7 @@ void manageserver(){
     server.write(msg.readString());
     msg = server.available();
   }
-  if(frameCount%5==0){
+  if(frameCount%1==0){
     updatezombiepositions();
   }
 }

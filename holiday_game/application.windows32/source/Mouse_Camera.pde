@@ -17,11 +17,11 @@ void menucam(){
 void mouseMoved(){
   if(menu == false){
     if(scoping){
-      mouse.x-=(width/2-mouseX)/50.0*0.5;
-      mouse.y+=(height/2-mouseY)/50.0*0.5;
+      mouse.x-=(width/2-mouseX)/30.0*0.5;
+      mouse.y+=(height/2-mouseY)/30.0*0.5;
     }else{
-      mouse.x-=(width/2-mouseX)/50.0;
-      mouse.y+=(height/2-mouseY)/50.0;
+      mouse.x-=(width/2-mouseX)/30.0;
+      mouse.y+=(height/2-mouseY)/30.0;
     }
     mouse.y = constrain(mouse.y,-90,90);
     robot.mouseMove(width/2,height/2);
@@ -31,11 +31,11 @@ void mouseMoved(){
 void mouseDragged(){
   if(menu == false){
     if(scoping){
-      mouse.x-=(width/2-mouseX)/50.0*0.3;
-      mouse.y+=(height/2-mouseY)/50.0*0.3;
+      mouse.x-=(width/2-mouseX)/30.0*0.5;
+      mouse.y+=(height/2-mouseY)/30.0*0.5;
     }else{
-      mouse.x-=(width/2-mouseX)/50.0;
-      mouse.y+=(height/2-mouseY)/50.0;
+      mouse.x-=(width/2-mouseX)/30.0;
+      mouse.y+=(height/2-mouseY)/30.0;
     }
     mouse.y = constrain(mouse.y,-90,90);
     robot.mouseMove(width/2,height/2);

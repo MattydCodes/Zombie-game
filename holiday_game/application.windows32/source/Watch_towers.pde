@@ -38,6 +38,7 @@ class tower{
     }
     if(d < 25 && keys[4] == 1){
       intower = true;
+      towerid = id;
       towerbox = pos.copy().add(0.0,0.0,93);
     }
   }

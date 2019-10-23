@@ -460,11 +460,11 @@ public void menucam(){
 public void mouseMoved(){
   if(menu == false){
     if(scoping){
-      mouse.x-=(width/2-mouseX)/50.0f*0.5f;
-      mouse.y+=(height/2-mouseY)/50.0f*0.5f;
+      mouse.x-=(width/2-mouseX)/30.0f*0.5f;
+      mouse.y+=(height/2-mouseY)/30.0f*0.5f;
     }else{
-      mouse.x-=(width/2-mouseX)/50.0f;
-      mouse.y+=(height/2-mouseY)/50.0f;
+      mouse.x-=(width/2-mouseX)/30.0f;
+      mouse.y+=(height/2-mouseY)/30.0f;
     }
     mouse.y = constrain(mouse.y,-90,90);
     robot.mouseMove(width/2,height/2);
@@ -474,11 +474,11 @@ public void mouseMoved(){
 public void mouseDragged(){
   if(menu == false){
     if(scoping){
-      mouse.x-=(width/2-mouseX)/50.0f*0.3f;
-      mouse.y+=(height/2-mouseY)/50.0f*0.3f;
+      mouse.x-=(width/2-mouseX)/30.0f*0.5f;
+      mouse.y+=(height/2-mouseY)/30.0f*0.5f;
     }else{
-      mouse.x-=(width/2-mouseX)/50.0f;
-      mouse.y+=(height/2-mouseY)/50.0f;
+      mouse.x-=(width/2-mouseX)/30.0f;
+      mouse.y+=(height/2-mouseY)/30.0f;
     }
     mouse.y = constrain(mouse.y,-90,90);
     robot.mouseMove(width/2,height/2);
@@ -693,18 +693,22 @@ public void updatescore(){
 }
 
 public void updateclient(){
-  if(client.available() != 0){
-    String msg = client.readString();
-    while(msg.length() != 0){
-      String submsg = msg.substring(0,msg.indexOf("]")+1);
-      actonmessage(submsg);
-      msg = msg.substring(msg.indexOf("]")+1);
+  if(!client.active()){
+    client = new Client(this,serverip,port);
+  }else{
+    if(client.available() != 0){
+      String msg = client.readString();
+      while(msg.length() != 0){
+        String submsg = msg.substring(0,msg.indexOf("]")+1);
+        actonmessage(submsg);
+        msg = msg.substring(msg.indexOf("]")+1);
+      }
     }
-  }
-  String snt = createmessage(myip,myname,player.copy(),mouse.copy(),reloadtimer,weapon,gunstate,shottimer,health);
-  client.write(snt);
-  if(ishosting){
-    updatescore();
+    String snt = createmessage(myip,myname,player.copy(),mouse.copy(),reloadtimer,weapon,gunstate,shottimer,health);
+    client.write(snt);
+    if(ishosting){
+      updatescore();
+    }
   }
 }
 
@@ -1078,7 +1082,7 @@ public void manageserver(){
     server.write(msg.readString());
     msg = server.available();
   }
-  if(frameCount%5==0){
+  if(frameCount%1==0){
     updatezombiepositions();
   }
 }
@@ -1280,6 +1284,7 @@ class tower{
     }
     if(d < 25 && keys[4] == 1){
       intower = true;
+      towerid = id;
       towerbox = pos.copy().add(0.0f,0.0f,93);
     }
   }
@@ -1429,7 +1434,7 @@ float speed = 0;
 float fall = 0;
 boolean intower = false;
 PVector towerbox = new PVector(0,0,0);
-int towerid = 0;
+float towerid = 0;
 public void move(){
   if(health <= 0){
     alive = false;
@@ -1514,12 +1519,12 @@ public void move(){
     for(int i = 0; i < zombies.size(); i++){
       zombie current = zombies.get(i);
       float d = dist(player.x,player.y,player.z,current.pos.x,current.pos.y,current.pos.z);
-      if(d < 20){
+      if(d < 30){
         PVector restrict = vectortowards(current.pos,player);
         float t = 3*1.0f/(sqrt(pow(restrict.x,2)+pow(restrict.y,2)+pow(restrict.z,2)));     
-        player.x = lerp(player.x,player.x+restrict.x*movespeed/speed*t,2.0f-d/10.0f);
-        player.y = lerp(player.y,player.y+restrict.y*movespeed/speed*t,2.0f-d/10.0f);
-        player.z = lerp(player.z,player.z+restrict.z*movespeed/speed*t,2.0f-d/10.0f);
+        player.x = lerp(player.x,player.x+restrict.x*movespeed/speed*t,3.0f-d/10.0f);
+        player.y = lerp(player.y,player.y+restrict.y*movespeed/speed*t,3.0f-d/10.0f);
+        player.z = lerp(player.z,player.z+restrict.z*movespeed/speed*t,3.0f-d/10.0f);
         fall-=restrict.z*0.1f;
       }
     }
@@ -1528,12 +1533,12 @@ public void move(){
     if(clients.get(i).ip.equals(myip) == false){
       playerc current = clients.get(i);
       float d = dist(player.x,player.y,player.z,current.pos.x,current.pos.y,current.pos.z);
-      if(d < 15){
+      if(d < 20){
         PVector restrict = vectortowards(current.pos,player);
         float t = 3*1.0f/(sqrt(pow(restrict.x,2)+pow(restrict.y,2)+pow(restrict.z,2)));   
-        player.x = lerp(player.x,player.x+restrict.x*movespeed/speed*t,1.5f-d/10.0f);
-        player.y = lerp(player.y,player.y+restrict.y*movespeed/speed*t,1.5f-d/10.0f);
-        player.z = lerp(player.z,player.z+restrict.y*movespeed/speed*t,1.5f-d/10.0f);
+        player.x = lerp(player.x,player.x+restrict.x*movespeed/speed*t,2-d/10.0f);
+        player.y = lerp(player.y,player.y+restrict.y*movespeed/speed*t,2-d/10.0f);
+        player.z = lerp(player.z,player.z+restrict.y*movespeed/speed*t,2-d/10.0f);
         fall-=restrict.z*0.1f;
       }
     }
@@ -2133,7 +2138,7 @@ class zombie{
     }
     target = closestClient(pos);
     PVector dir = vectortowards(pos,target);
-    if(dist(target.x,target.y,target.z,pos.x,pos.y,pos.z) < 20){
+    if(dist(target.x,target.y,target.z,pos.x,pos.y,pos.z) < 30){
       attacktimer = 1.25f;
     }else if(attacktimer == 0){
       if(sqrt((rot*rot)-(pow(bearing(target,pos),2))) > 180 || sqrt((rot*rot)-(pow(bearing(target,pos),2))) < -180){
@@ -2167,10 +2172,10 @@ class zombie{
       float d = dist(pos.x,pos.y,pos.z,current.pos.x,current.pos.y,current.pos.z);
       if(d < 25){
         PVector resist = vectortowards(current.pos,pos);
-        float t = 1.0f/(sqrt(pow(resist.x,2)+pow(resist.y,2)));
-        pos.x = lerp(pos.x,pos.x+resist.x*zombspeed*t,2.5f-d/10.0f);
-        pos.y = lerp(pos.y,pos.y+resist.y*zombspeed*t,2.5f-d/10.0f);
-        pos.y = lerp(pos.z,pos.z+resist.z*zombspeed*t,2.5f-d/10.0f);
+        float t = 1.0f/(sqrt(pow(resist.x,2)+pow(resist.y,2)+pow(resist.z,2)));
+        pos.x = lerp(pos.x,pos.x+resist.x*zombspeed*t,1.0f-d/25.0f);
+        pos.y = lerp(pos.y,pos.y+resist.y*zombspeed*t,1.0f-d/25.0f);
+        pos.z = lerp(pos.z,pos.z+resist.z*zombspeed*t,1.0f-d/25.0f);
       }
     }
     timer+=0.016f;
