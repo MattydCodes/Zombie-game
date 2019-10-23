@@ -91,11 +91,9 @@ void setup(){
   crosshair = loadImage("data/images/crosshair.png");
   loadmenu();
   ui = createGraphics(1920,1080,P2D);
-  textrenderer = createGraphics(300,150,P2D);
   d3 = createGraphics(1920,1080,P3D);
   d3.smooth(4);
   ui.smooth(4);
-  textrenderer.smooth(4);
 }
 void draw(){
   if(menu){
@@ -121,13 +119,14 @@ void draw(){
 
 void draw3d(){
   d3.beginDraw();
+  setlightsources();
   d3.shader(shader);
   if(alive){
     move();
   }
   treehitboxes();
-  d3.background(63.75);
-  d3.directionalLight(180,150,150,0,0.05,-1);
+  d3.background(0);
+  d3.directionalLight(2,2,2,0,0.001,-1);
   d3.shape(c.terrain);
   managedrops();
   if(alive){

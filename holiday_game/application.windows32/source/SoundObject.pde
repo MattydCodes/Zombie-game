@@ -14,7 +14,7 @@ class soundobject{
     calculate();
   }
   void calculate(){
-    float d = (1.0/(dist(player.x,player.y,player.z,pos.x,pos.y,pos.z)/(scale*12.5)))*1.0;
+    float d = (1.0/(dist(player.x,player.y,player.z,pos.x,pos.y,pos.z)*soundfalloff));
     if(d > 1){
       d = 1.0;
     }

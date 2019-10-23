@@ -4,7 +4,6 @@ int port = 7878;
 String serverip = "";
 String myip;
 String myname = "";
-PGraphics textrenderer;
 void createmyip(){
   int numb1 = int(constrain((pow(random(0.2,1)+0.25,2))*255.0,0,255));
   String n1;
@@ -81,9 +80,12 @@ class playerc{
   color colour;
   PShape nametext;
   String name = "";
+  PGraphics textrenderer;
   playerc(PVector pos_,String ip_){
     ip = ip_;
     pos = pos_;
+    textrenderer = createGraphics(300,150,P2D);
+    textrenderer.smooth(4);
     colour = color(int(ip.substring(0,3)),int(ip.substring(3,6)),int(ip.substring(6,9)));
     nametext = createShape();
     nametext.beginShape(QUAD);
@@ -163,7 +165,7 @@ String createbmessage(String ip,PVector pos, PVector vel){
 }
 
 String removebarrier(float id){
-  String msg = "e" + str(id) + "]"; //Used:pmcdoequlntsva   Available: bfghijkruwxyz
+  String msg = "e" + str(id) + "]"; //Used:pmcdoequlntsvab   Available: fghijkruwxyz
   return msg;
 }
 
@@ -213,6 +215,9 @@ void updateclient(){
       String submsg = msg.substring(0,msg.indexOf("]")+1);
       actonmessage(submsg);
       msg = msg.substring(msg.indexOf("]")+1);
+    }
+    if(msg.length() > 0){
+      println(msg);
     }
     client.clear();
   }
@@ -280,8 +285,8 @@ void actonmessage(String msg){
       current.wpnstate = e;
       current.sht = f;
       current.hp = hp;
-      current.name = name;
-      current.nametext.setTexture(current.createtexture());
+      PImage copy = current.createtexture();
+      current.nametext.setTexture(copy);
     }else{
       int index1 = msg.indexOf('i'); //m:¬ h:` a:£ b:$ c:{ d:; e: : f:| x:& y:% z:]
       int index2 = msg.indexOf('¬'); //m  
@@ -418,7 +423,7 @@ void actonmessage(String msg){
       zombie current = zombies.get(i);
       if(current.id == id){
         current.hp = hp;
-        points+=10;
+        points+=20;
         particlesystems.add(new particlesystem(current.pos.copy(),new PVector(0,0,0),0.1,0.01,color(255,20,20),2,10,5,5));
       }
     }
@@ -447,11 +452,12 @@ void actonmessage(String msg){
       if(id.equals(myip) == false){
         bullets.add(new projectile(new PVector(a,b,c),new PVector(x,y,z),0));
       }
-      if(gunshot[shotcount].isPlaying()){
-        gunshot[shotcount].stop();
-      }
+      //if(gunshot[shotcount].isPlaying()){
+      //  gunshot[shotcount].stop();
+      //}
       gunshot[shotcount].play();
       soundobjects.add(new soundobject(gunshot[shotcount],new PVector(a+x,b+y,c+z)));
+      println("Shot"+millis());
       shotcount++;
       if(shotcount > gunshot.length-1){
         shotcount = 0;
@@ -593,9 +599,7 @@ void manageserver(){
     server.write(msg.readString());
     msg = server.available();
   }
-  if(frameCount%1==0){
-    updatezombiepositions();
-  }
+  updatezombiepositions();
 }
 
 void drawplayers(){

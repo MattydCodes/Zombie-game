@@ -79,6 +79,7 @@ void shoot(){
   }else{
     bullets.add(new projectile(new PVector(player.x+offset.x,player.y+offset.y,player.z+offset.z),facingdir,weaponstats[weapon][0]));
   }
+  println("shot sent:" + createbmessage(myip,new PVector(player.x+offset.x,player.y+offset.y,player.z+offset.z),facingdir.copy()));
   client.write(createbmessage(myip,new PVector(player.x+offset.x,player.y+offset.y,player.z+offset.z),facingdir.copy()));
 }
 class projectile{
@@ -104,15 +105,8 @@ class projectile{
     if(dist(pos.x,pos.y,pos.z,w/2*scale,w/2*scale,depth/2) > radius*scale){
       out = true;
     }
-    for(int i = 0; i < trees.length; i++){
-      float d = dist(pos.x,pos.y,pos.z,trees[i].x,trees[i].y,trees[i].z);
-      if(d < 30){
-        hittree = true;
-        if(d < closesttree){
-          closesttree = d;
-          treeindex = i;
-        }
-      }
+    if(pos.z <= nval(pos.x/scale,pos.y/scale)*scale){
+      out = true;
     }
     for(int i = 0; i < zombies.size(); i++){
       zombie current = zombies.get(i);
@@ -126,18 +120,11 @@ class projectile{
       }
     }
     if(hitzomb && damage > 0){
-      if(closestzomb <= closesttree){
-        zombie current = zombies.get(zombindex);
-        current.hp-=damage;
-        current.hit();
-        if(current.hp <= 0){
-          kills++;
-        }
-      }
-    }
-    if(hittree && damage > 0){
-      if(closesttree < closestzomb){
-        bullethittree(treeindex,20);
+      zombie current = zombies.get(zombindex);
+      current.hp-=damage;
+      current.hit();
+      if(current.hp <= 0){
+        kills++;
       }
     }
   }

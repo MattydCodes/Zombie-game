@@ -13,13 +13,11 @@ class gundrop{
   }
   void display(){
     anim+=0.016;
-    d3.translate(pos.x,pos.y,pos.z+15+sin(anim)*4);
-    shader.set("translate",pos.x,pos.y,pos.z+15+sin(anim)*4);
-    d3.rotateZ(cos(anim));
+    weaponcrate.rotateX(PI/2);
+    weaponcrate.rotateZ(cos(anim));
+    weaponcrate.translate(pos.x,pos.y,pos.z+15+sin(anim)*4);
     d3.shape(weaponcrate);
-    d3.rotateZ(-cos(anim));
-    shader.set("translate",0,0,0,0);
-    d3.translate(-pos.x,-pos.y,-(pos.z+15+sin(anim)*4));
+    weaponcrate.resetMatrix();
     if(dist(pos.x,pos.y,pos.z,player.x,player.y,player.z) < 40 && keys[4] == 1){
       weapon = dweapon;
       gunstate = 0;

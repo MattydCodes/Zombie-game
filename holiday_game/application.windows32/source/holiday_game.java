@@ -111,11 +111,9 @@ public void setup(){
   crosshair = loadImage("data/images/crosshair.png");
   loadmenu();
   ui = createGraphics(1920,1080,P2D);
-  textrenderer = createGraphics(300,150,P2D);
   d3 = createGraphics(1920,1080,P3D);
   d3.smooth(4);
   ui.smooth(4);
-  textrenderer.smooth(4);
 }
 public void draw(){
   if(menu){
@@ -141,13 +139,14 @@ public void draw(){
 
 public void draw3d(){
   d3.beginDraw();
+  setlightsources();
   d3.shader(shader);
   if(alive){
     move();
   }
   treehitboxes();
-  d3.background(63.75f);
-  d3.directionalLight(180,150,150,0,0.05f,-1);
+  d3.background(0);
+  d3.directionalLight(2,2,2,0,0.001f,-1);
   d3.shape(c.terrain);
   managedrops();
   if(alive){
@@ -237,9 +236,9 @@ class barrier{
     }
   }
   public void display(){
-    d3.translate(pos.x,pos.y,pos.z);
+    barrel[type].translate(pos.x,pos.y,pos.z);
     d3.shape(barrel[type]);
-    d3.translate(-pos.x,-pos.y,-pos.z);
+    barrel[type].translate(-pos.x,-pos.y,-pos.z);
   }
 }
 public void managebarriers(){
@@ -267,9 +266,9 @@ public void showbarrel(){
     vec.x = round(vec.x/10)*10;
     vec.y = round(vec.y/10)*10;
     vec.z = nval(vec.x/scale,vec.y/scale)*scale+18;
-    d3.translate(vec.x,vec.y,vec.z);
+    barrel[0].translate(vec.x,vec.y,vec.z);
     d3.shape(barrel[0]);
-    d3.resetMatrix();
+    barrel[0].translate(-vec.x,-vec.y,-vec.z);
   }
 }
 
@@ -434,9 +433,10 @@ public void drawmenu(){
 }
 public void menudraw(){
   d3.beginDraw();
+  setlightsources();
   d3.shader(shader);
-  d3.background(63.75f);
-  d3.directionalLight(180,150,150,0,0.05f,-1);
+  d3.background(0);
+  d3.directionalLight(2,2,2,0,0.005f,-1);
   d3.shape(c.terrain);
   menucam();
   d3.endDraw();
@@ -490,7 +490,6 @@ int port = 7878;
 String serverip = "";
 String myip;
 String myname = "";
-PGraphics textrenderer;
 public void createmyip(){
   int numb1 = PApplet.parseInt(constrain((pow(random(0.2f,1)+0.25f,2))*255.0f,0,255));
   String n1;
@@ -567,9 +566,12 @@ class playerc{
   int colour;
   PShape nametext;
   String name = "";
+  PGraphics textrenderer;
   playerc(PVector pos_,String ip_){
     ip = ip_;
     pos = pos_;
+    textrenderer = createGraphics(300,150,P2D);
+    textrenderer.smooth(4);
     colour = color(PApplet.parseInt(ip.substring(0,3)),PApplet.parseInt(ip.substring(3,6)),PApplet.parseInt(ip.substring(6,9)));
     nametext = createShape();
     nametext.beginShape(QUAD);
@@ -649,7 +651,7 @@ public String createbmessage(String ip,PVector pos, PVector vel){
 }
 
 public String removebarrier(float id){
-  String msg = "e" + str(id) + "]"; //Used:pmcdoequlntsva   Available: bfghijkruwxyz
+  String msg = "e" + str(id) + "]"; //Used:pmcdoequlntsvab   Available: fghijkruwxyz
   return msg;
 }
 
@@ -699,6 +701,9 @@ public void updateclient(){
       String submsg = msg.substring(0,msg.indexOf("]")+1);
       actonmessage(submsg);
       msg = msg.substring(msg.indexOf("]")+1);
+    }
+    if(msg.length() > 0){
+      println(msg);
     }
     client.clear();
   }
@@ -766,8 +771,8 @@ public void actonmessage(String msg){
       current.wpnstate = e;
       current.sht = f;
       current.hp = hp;
-      current.name = name;
-      current.nametext.setTexture(current.createtexture());
+      PImage copy = current.createtexture();
+      current.nametext.setTexture(copy);
     }else{
       int index1 = msg.indexOf('i'); //m:¬ h:` a:£ b:$ c:{ d:; e: : f:| x:& y:% z:]
       int index2 = msg.indexOf('¬'); //m  
@@ -904,7 +909,7 @@ public void actonmessage(String msg){
       zombie current = zombies.get(i);
       if(current.id == id){
         current.hp = hp;
-        points+=10;
+        points+=20;
         particlesystems.add(new particlesystem(current.pos.copy(),new PVector(0,0,0),0.1f,0.01f,color(255,20,20),2,10,5,5));
       }
     }
@@ -933,11 +938,12 @@ public void actonmessage(String msg){
       if(id.equals(myip) == false){
         bullets.add(new projectile(new PVector(a,b,c),new PVector(x,y,z),0));
       }
-      if(gunshot[shotcount].isPlaying()){
-        gunshot[shotcount].stop();
-      }
+      //if(gunshot[shotcount].isPlaying()){
+      //  gunshot[shotcount].stop();
+      //}
       gunshot[shotcount].play();
       soundobjects.add(new soundobject(gunshot[shotcount],new PVector(a+x,b+y,c+z)));
+      println("Shot"+millis());
       shotcount++;
       if(shotcount > gunshot.length-1){
         shotcount = 0;
@@ -1079,9 +1085,7 @@ public void manageserver(){
     server.write(msg.readString());
     msg = server.available();
   }
-  if(frameCount%1==0){
-    updatezombiepositions();
-  }
+  updatezombiepositions();
 }
 
 public void drawplayers(){
@@ -1155,6 +1159,29 @@ public void displayweapon(){
   d3.translate(-player.x,-player.y,-player.z);
 }
 PShader blood;
+
+public void setlightsources(){
+  float[] x = new float[10];
+  float[] y = new float[10];
+  float[] z = new float[10];
+  for(int i = 0; i < 10; i++){
+    if(clients.size() <= i){
+      x[i] = -10000;
+      y[i] = -10000;
+      z[i] = -10000;
+    }else{
+      playerc current = clients.get(i);
+      x[i] = current.pos.x;
+      y[i] = current.pos.y;
+      z[i] = current.pos.z+45;
+    }
+  }
+  shader.set("xpos",x);
+  shader.set("ypos",y);
+  shader.set("zpos",z);
+  shader.set("light",1);
+}
+
 ArrayList<soundobject> soundobjects = new ArrayList<soundobject>();
 PVector leftear;
 PVector rightear;
@@ -1171,7 +1198,7 @@ class soundobject{
     calculate();
   }
   public void calculate(){
-    float d = (1.0f/(dist(player.x,player.y,player.z,pos.x,pos.y,pos.z)/(scale*12.5f)))*1.0f;
+    float d = (1.0f/(dist(player.x,player.y,player.z,pos.x,pos.y,pos.z)*soundfalloff));
     if(d > 1){
       d = 1.0f;
     }
@@ -1286,9 +1313,9 @@ class tower{
     }
   }
   public void display(){
-    d3.translate(pos.x,pos.y,pos.z);
-    d3.shape(towerm[type]);
-    d3.translate(-pos.x,-pos.y,-pos.z);
+    towerm[0].translate(pos.x,pos.y,pos.z);
+    d3.shape(towerm[0]);
+    towerm[0].translate(-pos.x,-pos.y,-pos.z);
   }
 }
 public void managetowers(){
@@ -1316,9 +1343,9 @@ public void showtower(){
     vec.x = round(vec.x/10)*10;
     vec.y = round(vec.y/10)*10;
     vec.z = nval(vec.x/scale,vec.y/scale)*scale+40;
-    d3.translate(vec.x,vec.y,vec.z);
+    towerm[0].translate(vec.x,vec.y,vec.z);
     d3.shape(towerm[0]);
-    d3.resetMatrix();
+    towerm[0].translate(-vec.x,-vec.y,-vec.z);
   }
 }
 
@@ -1386,13 +1413,11 @@ class gundrop{
   }
   public void display(){
     anim+=0.016f;
-    d3.translate(pos.x,pos.y,pos.z+15+sin(anim)*4);
-    shader.set("translate",pos.x,pos.y,pos.z+15+sin(anim)*4);
-    d3.rotateZ(cos(anim));
+    weaponcrate.rotateX(PI/2);
+    weaponcrate.rotateZ(cos(anim));
+    weaponcrate.translate(pos.x,pos.y,pos.z+15+sin(anim)*4);
     d3.shape(weaponcrate);
-    d3.rotateZ(-cos(anim));
-    shader.set("translate",0,0,0,0);
-    d3.translate(-pos.x,-pos.y,-(pos.z+15+sin(anim)*4));
+    weaponcrate.resetMatrix();
     if(dist(pos.x,pos.y,pos.z,player.x,player.y,player.z) < 40 && keys[4] == 1){
       weapon = dweapon;
       gunstate = 0;
@@ -1573,6 +1598,8 @@ public void keyPressed(){
       keys[6] = 1;
     }else if(key == 'q' || key == 'Q'){
       keys[7] = 1;
+    }else if(key == 't' || key == 'T'){
+      keys[8] = 1;
     }else if(keyCode == 27){
       disconnect(myip);
       exit();
@@ -1803,6 +1830,7 @@ public void shoot(){
   }else{
     bullets.add(new projectile(new PVector(player.x+offset.x,player.y+offset.y,player.z+offset.z),facingdir,weaponstats[weapon][0]));
   }
+  println("shot sent:" + createbmessage(myip,new PVector(player.x+offset.x,player.y+offset.y,player.z+offset.z),facingdir.copy()));
   client.write(createbmessage(myip,new PVector(player.x+offset.x,player.y+offset.y,player.z+offset.z),facingdir.copy()));
 }
 class projectile{
@@ -1828,15 +1856,8 @@ class projectile{
     if(dist(pos.x,pos.y,pos.z,w/2*scale,w/2*scale,depth/2) > radius*scale){
       out = true;
     }
-    for(int i = 0; i < trees.length; i++){
-      float d = dist(pos.x,pos.y,pos.z,trees[i].x,trees[i].y,trees[i].z);
-      if(d < 30){
-        hittree = true;
-        if(d < closesttree){
-          closesttree = d;
-          treeindex = i;
-        }
-      }
+    if(pos.z <= nval(pos.x/scale,pos.y/scale)*scale){
+      out = true;
     }
     for(int i = 0; i < zombies.size(); i++){
       zombie current = zombies.get(i);
@@ -1850,18 +1871,11 @@ class projectile{
       }
     }
     if(hitzomb && damage > 0){
-      if(closestzomb <= closesttree){
-        zombie current = zombies.get(zombindex);
-        current.hp-=damage;
-        current.hit();
-        if(current.hp <= 0){
-          kills++;
-        }
-      }
-    }
-    if(hittree && damage > 0){
-      if(closesttree < closestzomb){
-        bullethittree(treeindex,20);
+      zombie current = zombies.get(zombindex);
+      current.hp-=damage;
+      current.hit();
+      if(current.hp <= 0){
+        kills++;
       }
     }
   }
@@ -1900,6 +1914,7 @@ float rh = 28;
 float sh = 58;
 PVector[] trees;
 PShape fog;
+float soundfalloff = 1.0f/(scale*7.5f);
 class chunk{
   PShape terrain;
   chunk(PVector pos){

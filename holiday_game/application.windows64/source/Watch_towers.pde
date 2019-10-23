@@ -43,9 +43,9 @@ class tower{
     }
   }
   void display(){
-    d3.translate(pos.x,pos.y,pos.z);
-    d3.shape(towerm[type]);
-    d3.translate(-pos.x,-pos.y,-pos.z);
+    towerm[0].translate(pos.x,pos.y,pos.z);
+    d3.shape(towerm[0]);
+    towerm[0].translate(-pos.x,-pos.y,-pos.z);
   }
 }
 void managetowers(){
@@ -73,9 +73,9 @@ void showtower(){
     vec.x = round(vec.x/10)*10;
     vec.y = round(vec.y/10)*10;
     vec.z = nval(vec.x/scale,vec.y/scale)*scale+40;
-    d3.translate(vec.x,vec.y,vec.z);
+    towerm[0].translate(vec.x,vec.y,vec.z);
     d3.shape(towerm[0]);
-    d3.resetMatrix();
+    towerm[0].translate(-vec.x,-vec.y,-vec.z);
   }
 }
 

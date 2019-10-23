@@ -38,9 +38,9 @@ class barrier{
     }
   }
   void display(){
-    d3.translate(pos.x,pos.y,pos.z);
+    barrel[type].translate(pos.x,pos.y,pos.z);
     d3.shape(barrel[type]);
-    d3.translate(-pos.x,-pos.y,-pos.z);
+    barrel[type].translate(-pos.x,-pos.y,-pos.z);
   }
 }
 void managebarriers(){
@@ -68,9 +68,9 @@ void showbarrel(){
     vec.x = round(vec.x/10)*10;
     vec.y = round(vec.y/10)*10;
     vec.z = nval(vec.x/scale,vec.y/scale)*scale+18;
-    d3.translate(vec.x,vec.y,vec.z);
+    barrel[0].translate(vec.x,vec.y,vec.z);
     d3.shape(barrel[0]);
-    d3.resetMatrix();
+    barrel[0].translate(-vec.x,-vec.y,-vec.z);
   }
 }
 

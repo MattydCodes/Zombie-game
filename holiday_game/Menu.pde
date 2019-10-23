@@ -103,9 +103,10 @@ void drawmenu(){
 }
 void menudraw(){
   d3.beginDraw();
+  setlightsources();
   d3.shader(shader);
-  d3.background(63.75);
-  d3.directionalLight(180,150,150,0,0.05,-1);
+  d3.background(0);
+  d3.directionalLight(2,2,2,0,0.005,-1);
   d3.shape(c.terrain);
   menucam();
   d3.endDraw();

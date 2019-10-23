@@ -12,6 +12,7 @@ float rh = 28;
 float sh = 58;
 PVector[] trees;
 PShape fog;
+float soundfalloff = 1.0/(scale*7.5);
 class chunk{
   PShape terrain;
   chunk(PVector pos){

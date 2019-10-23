@@ -146,6 +146,8 @@ void keyPressed(){
       keys[6] = 1;
     }else if(key == 'q' || key == 'Q'){
       keys[7] = 1;
+    }else if(key == 't' || key == 'T'){
+      keys[8] = 1;
     }else if(keyCode == 27){
       disconnect(myip);
       exit();
