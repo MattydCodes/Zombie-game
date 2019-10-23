@@ -50,7 +50,6 @@ public void setup(){
   noiseSeed(seed);
   trees = new PVector[10000];
   c = new chunk(new PVector(0,0));
-  thread("clientdetect");
   try{
     robot = new Robot();
     robot.setAutoDelay(0);
@@ -533,11 +532,13 @@ public void setupserver(){
   server = new Server(this,port);
   serverip = server.ip();
   client = new Client(this,serverip,port);
+  thread("clientdetect");
 }
 
 public void setupclient(){
   client = new Client(this,serverip,port);
   println("connected");
+  thread("clientdetect");
 }
 
 public void serverEvent(Server someServer, Client someClient) {
@@ -698,6 +699,7 @@ public void clientdetect(){
     if(client.active() == false){
       client = new Client(this,serverip,port);
     }
+    delay(100);
   }
 }
 
@@ -710,6 +712,7 @@ public void updateclient(){
       msg = msg.substring(msg.indexOf("]")+1);
     }
   }
+  client.clear();
   String snt = createmessage(myip,myname,player.copy(),mouse.copy(),reloadtimer,weapon,gunstate,shottimer,health);
   client.write(snt);
   if(ishosting){
@@ -1585,7 +1588,7 @@ public void keyPressed(){
       disconnect(myip);
       exit();
     }else if(key == '#'){
-      client = new Client(this,serverip,port);
+      client.stop();
     }
   }else{
     if(keyCode == 8){

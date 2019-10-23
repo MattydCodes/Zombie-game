@@ -46,11 +46,13 @@ void setupserver(){
   server = new Server(this,port);
   serverip = server.ip();
   client = new Client(this,serverip,port);
+  thread("clientdetect");
 }
 
 void setupclient(){
   client = new Client(this,serverip,port);
   println("connected");
+  thread("clientdetect");
 }
 
 void serverEvent(Server someServer, Client someClient) {
@@ -211,6 +213,7 @@ void clientdetect(){
     if(client.active() == false){
       client = new Client(this,serverip,port);
     }
+    delay(100);
   }
 }
 
@@ -223,6 +226,7 @@ void updateclient(){
       msg = msg.substring(msg.indexOf("]")+1);
     }
   }
+  client.clear();
   String snt = createmessage(myip,myname,player.copy(),mouse.copy(),reloadtimer,weapon,gunstate,shottimer,health);
   client.write(snt);
   if(ishosting){

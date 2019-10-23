@@ -150,7 +150,7 @@ void keyPressed(){
       disconnect(myip);
       exit();
     }else if(key == '#'){
-      client = new Client(this,serverip,port);
+      client.stop();
     }
   }else{
     if(keyCode == 8){
