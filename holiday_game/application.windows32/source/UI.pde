@@ -24,7 +24,7 @@ void drawui(){
   ui.textSize(20);
   ui.text("Score : " + int(points),50,80);
   ui.textSize(40);
-  ui.fill(255,10,10,255-(cos(radians(rounddelay*2))+0.5)*245.0);
+  ui.fill(255,10,10,255-(sin(radians(rounddelay*2)))*245.0);
   ui.text("Round : " + int(round),45,40);
   if(started == false && ishosting){
     ui.fill(255,50,50);

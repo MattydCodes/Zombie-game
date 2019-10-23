@@ -1229,7 +1229,7 @@ public void drawui(){
   ui.textSize(20);
   ui.text("Score : " + PApplet.parseInt(points),50,80);
   ui.textSize(40);
-  ui.fill(255,10,10,255-(cos(radians(rounddelay*2))+0.5f)*245.0f);
+  ui.fill(255,10,10,255-(sin(radians(rounddelay*2)))*245.0f);
   ui.text("Round : " + PApplet.parseInt(round),45,40);
   if(started == false && ishosting){
     ui.fill(255,50,50);
