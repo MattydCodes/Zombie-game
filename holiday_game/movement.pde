@@ -52,11 +52,11 @@ void move(){
       player.z = lerp(player.z,towerbox.z,0.35);
       fall = 0;
       if(keys[6] == 1){
-        fall = -2;
-        player.z+=1;
+        fall = -1.8;
+        player.z+=0.1;
       }
-    }else if(player.z >= towerbox.z+10){
-      player.z = towerbox.z+9.9;
+    }else if(player.z >= towerbox.z+7){
+      player.z = towerbox.z+6.9;
       fall = 0;
     }else{
       fall+=0.14;
@@ -89,12 +89,12 @@ void move(){
     for(int i = 0; i < zombies.size(); i++){
       zombie current = zombies.get(i);
       float d = dist(player.x,player.y,player.z,current.pos.x,current.pos.y,current.pos.z);
-      if(d < 30){
+      if(d < 20){
         PVector restrict = vectortowards(current.pos,player);
         float t = 3*1.0/(sqrt(pow(restrict.x,2)+pow(restrict.y,2)+pow(restrict.z,2)));     
-        player.x = lerp(player.x,player.x+restrict.x*movespeed/speed*t,3.0-d/10.0);
-        player.y = lerp(player.y,player.y+restrict.y*movespeed/speed*t,3.0-d/10.0);
-        player.z = lerp(player.z,player.z+restrict.z*movespeed/speed*t,3.0-d/10.0);
+        player.x = lerp(player.x,player.x+restrict.x*movespeed/speed*t,2.0-d/10.0);
+        player.y = lerp(player.y,player.y+restrict.y*movespeed/speed*t,2.0-d/10.0);
+        player.z = lerp(player.z,player.z+restrict.z*movespeed/speed*t,2.0-d/10.0);
         fall-=restrict.z*0.1;
       }
     }

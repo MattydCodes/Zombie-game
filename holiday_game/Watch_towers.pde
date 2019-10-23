@@ -17,13 +17,13 @@ class tower{
     for(int i = 0; i < zombies.size(); i++){
       zombie current = zombies.get(i);
       float d = dist(current.pos.x,current.pos.y,pos.x,pos.y);
-      if(d < 20){
+      if(d < 60){
         PVector restrict = vectortowards(pos,current.pos);
-        float t = 9*1.0/(sqrt(pow(restrict.x,2)+pow(restrict.y,2)));
-        current.pos.x = lerp(current.pos.x,current.pos.x+restrict.x*zombspeed/speed*t,(1.0-d/20.0));
-        current.pos.y = lerp(current.pos.y,current.pos.y+restrict.y*zombspeed/speed*t,(1.0-d/20.0));
+        float t = 3*1.0/(sqrt(pow(restrict.x,2)+pow(restrict.y,2)));
+        current.pos.x = lerp(current.pos.x,current.pos.x+restrict.x*zombspeed/speed*t,(1.0-d/60.0));
+        current.pos.y = lerp(current.pos.y,current.pos.y+restrict.y*zombspeed/speed*t,(1.0-d/60.0));
         if(ishosting){
-          hp-=0.5*(round/20.0);
+          hp-=0.5*(round/10.0);
         }
       }
     }

@@ -45,7 +45,7 @@ class zombie{
     }
     target = closestClient(pos);
     PVector dir = vectortowards(pos,target);
-    if(dist(target.x,target.y,pos.x,pos.y) < 35){
+    if(dist(target.x,target.y,target.z,pos.x,pos.y,pos.z) < 20){
       attacktimer = 1.25;
     }else if(attacktimer == 0){
       if(sqrt((rot*rot)-(pow(bearing(target,pos),2))) > 180 || sqrt((rot*rot)-(pow(bearing(target,pos),2))) < -180){
@@ -76,12 +76,13 @@ class zombie{
       if(current == this || attacktimer != 0){
         continue;
       }
-      float d = dist(pos.x,pos.y,current.pos.x,current.pos.y);
+      float d = dist(pos.x,pos.y,pos.z,current.pos.x,current.pos.y,current.pos.z);
       if(d < 25){
         PVector resist = vectortowards(current.pos,pos);
         float t = 1.0/(sqrt(pow(resist.x,2)+pow(resist.y,2)));
         pos.x = lerp(pos.x,pos.x+resist.x*zombspeed*t,2.5-d/10.0);
         pos.y = lerp(pos.y,pos.y+resist.y*zombspeed*t,2.5-d/10.0);
+        pos.y = lerp(pos.z,pos.z+resist.z*zombspeed*t,2.5-d/10.0);
       }
     }
     timer+=0.016;
@@ -115,7 +116,7 @@ class zombie{
       zombiea1.translate(pos.x,pos.y,pos.z);    
       d3.shape(zombiea1);
       if(dist(player.x,player.y,player.z,pos.x,pos.y,pos.z) <= 40 && sqrt(pow(rot-bearing(player,pos),2)) <= 45){
-        health-=0.1;
+        health-=1.0+round*0.1;
       }
     }else if(attacktimer != 0){
       zombiea2.resetMatrix();

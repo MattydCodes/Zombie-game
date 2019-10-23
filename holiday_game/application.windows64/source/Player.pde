@@ -12,9 +12,11 @@ PShape sniper1;
 PShape sniper2;
 PShape[][] weapons = new PShape[3][2];
 float[][] weaponstats = new float[3][5];
-int weapon = 1;
+int weapon = 2;
 int gunstate = 0;
 float bulletcount = 0;
+float scopelerp = 0;
+boolean scoping = false;
 void setupweapons(){
   weapons[0][0] = pistol1;
   weapons[0][1] = pistol2;
@@ -34,15 +36,24 @@ void createweapon(int index, int damage, float firerate, float bulletspeed, floa
   weaponstats[index][4] = reloadtimer;
 }
 void displayweapon(){
+  if(scoping && scopelerp < 1){
+    scopelerp+=0.1;
+    if(scopelerp > 1){
+      scopelerp = 1;
+    }
+  }else if(scoping == false && scopelerp > 0){
+    scopelerp-=0.1;
+    if(scopelerp < 0){
+      scopelerp = 0;
+    }
+  }
   d3.translate(player.x,player.y,player.z);
-  shader.set("translate",player.x,player.y,player.z);
   d3.rotateZ(radians(mouse.x)+PI/2);
   d3.rotateX(-sin(radians(mouse.y))-map(reloadtimer,0,weaponstats[weapon][4],0,PI));
-  d3.translate(5,-10-shottimer*2.5,0);
+  d3.translate(lerp(5,0,scopelerp),lerp(-10-shottimer*2.5,-6-shottimer*1.5,scopelerp),lerp(0,-0.2,scopelerp)); //5
   d3.shape(weapons[weapon][gunstate]);
-  d3.translate(-5,10+shottimer*2.5,0);
+  d3.translate(-lerp(5,0,scopelerp),-lerp(-10-shottimer*2.5,-6-shottimer*1.5,scopelerp),-lerp(0,-0.2,scopelerp));
   d3.rotateX(sin(radians(mouse.y))+map(reloadtimer,0,weaponstats[weapon][4],0,PI));
   d3.rotateZ(-(radians(mouse.x)+PI/2));
-  shader.set("translate",0,0,0,0);
   d3.translate(-player.x,-player.y,-player.z);
 }

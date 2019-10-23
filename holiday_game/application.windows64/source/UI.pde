@@ -7,7 +7,9 @@ void drawui(){
   ui.clear();
   ui.stroke(0);
   ui.fill(0);
-  ui.image(crosshair,944,524,32,32);
+  if(scoping == false){
+    ui.image(crosshair,944,524,32,32);
+  }
   ui.image(bulletico,80,910);
   ui.textSize(40);
   if(bulletcount < 10){
@@ -22,7 +24,7 @@ void drawui(){
   ui.textSize(20);
   ui.text("Score : " + int(points),50,80);
   ui.textSize(40);
-  ui.fill(255,10,10,255-sin(radians(rounddelay*2))*245.0);
+  ui.fill(255,10,10,255-(cos(radians(rounddelay*2))+0.5)*245.0);
   ui.text("Round : " + int(round),45,40);
   if(started == false && ishosting){
     ui.fill(255,50,50);

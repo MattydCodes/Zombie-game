@@ -2,7 +2,7 @@ PVector mouse = new PVector(0,0);
 //camera(width/2.0, height/2.0, (height/2.0) / tan(PI*30.0 / 180.0), width/2.0, height/2.0, 0, 0, 1, 0)
 //camera(eyeX, eyeY, eyeZ, centerX, centerY, centerZ, upX, upY, upZ)
 void cam(){
-  d3.perspective(PI/3.0, float(width)/float(height), (height/2.0) / tan(PI/3.0/2.0)/500.0, (height/2.0) / tan(PI/3.0/2.0)*30.0);
+  d3.perspective(lerp(PI/3.0,PI/6.0,scopelerp), float(width)/float(height), (height/2.0) / tan(PI/3.0/2.0)/500.0, (height/2.0) / tan(PI/3.0/2.0)*30.0);
   d3.camera(player.x,player.y,player.z,player.x+cos(radians(mouse.x)),player.y+sin(radians(mouse.x)),player.z+sin(radians(mouse.y)),0,0,-1);
 }
 
@@ -16,8 +16,13 @@ void menucam(){
 
 void mouseMoved(){
   if(menu == false){
-    mouse.x-=(width/2-mouseX)/50.0;
-    mouse.y+=(height/2-mouseY)/50.0;
+    if(scoping){
+      mouse.x-=(width/2-mouseX)/50.0*0.5;
+      mouse.y+=(height/2-mouseY)/50.0*0.5;
+    }else{
+      mouse.x-=(width/2-mouseX)/50.0;
+      mouse.y+=(height/2-mouseY)/50.0;
+    }
     mouse.y = constrain(mouse.y,-90,90);
     robot.mouseMove(width/2,height/2);
   }
@@ -25,8 +30,13 @@ void mouseMoved(){
 
 void mouseDragged(){
   if(menu == false){
-    mouse.x-=(width/2-mouseX)/50.0;
-    mouse.y+=(height/2-mouseY)/50.0;
+    if(scoping){
+      mouse.x-=(width/2-mouseX)/50.0*0.3;
+      mouse.y+=(height/2-mouseY)/50.0*0.3;
+    }else{
+      mouse.x-=(width/2-mouseX)/50.0;
+      mouse.y+=(height/2-mouseY)/50.0;
+    }
     mouse.y = constrain(mouse.y,-90,90);
     robot.mouseMove(width/2,height/2);
   }

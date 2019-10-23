@@ -23,7 +23,7 @@ class barrier{
         current.pos.x = lerp(current.pos.x,current.pos.x+restrict.x*zombspeed/speed*t,(1.0-d/20.0));
         current.pos.y = lerp(current.pos.y,current.pos.y+restrict.y*zombspeed/speed*t,(1.0-d/20.0));
         if(ishosting){
-          hp-=0.5*(round/20.0);
+          hp-=0.5*(round/10.0);
         }
       }
     }

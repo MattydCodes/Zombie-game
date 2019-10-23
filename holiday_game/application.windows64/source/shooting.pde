@@ -27,11 +27,15 @@ float shottimer = 0;
 void mousePressed(){
   if(mouseButton == LEFT && bulletcount > 0 && reloadtimer == 0 && reloading == false){
     shooting = true;
+  }if(mouseButton == RIGHT && reloadtimer == 0 && reloading == false){
+    scoping = true;
   }
 }
 void mouseReleased(){
   if(mouseButton == LEFT){
     shooting = false;
+  }else if(mouseButton == RIGHT){
+    scoping = false;
   }
 }
 void manageshooting(){
@@ -70,7 +74,11 @@ void shoot(){
   offset.x*=10;
   offset.y*=10;
   offset.z*=10;
-  bullets.add(new projectile(new PVector(player.x+offset.x,player.y+offset.y,player.z+offset.z),facingdir,weaponstats[weapon][0]));
+  if(scoping){
+    bullets.add(new projectile(new PVector(player.x+offset.x*0.15,player.y+offset.y*0.15,player.z+offset.z-0.6),facingdir,weaponstats[weapon][0]));
+  }else{
+    bullets.add(new projectile(new PVector(player.x+offset.x,player.y+offset.y,player.z+offset.z),facingdir,weaponstats[weapon][0]));
+  }
   client.write(createbmessage(myip,new PVector(player.x+offset.x,player.y+offset.y,player.z+offset.z),facingdir.copy()));
 }
 class projectile{

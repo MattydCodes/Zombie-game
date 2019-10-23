@@ -74,24 +74,36 @@ public void setup(){
   zombiea1.rotateX(PI/2);
   zombiea2 = loadshape("data/zombieattack2.obj","data/texture.png");
   zombiea2.rotateX(PI/2);
-  pistol1 = loadshape("data/pistol1.obj","data/pistoltext.png");
+  pistol1 = loadshape("data/pistol1R.obj","data/PistolTextR.png");
   pistol1.rotateX(PI/2);
-  pistol2 = loadshape("data/pistol2.obj","data/pistoltext.png");
+  pistol1.rotateZ(PI);
+  pistol2 = loadshape("data/Pistol2R.obj","data/PistolTextR.png");
   pistol2.rotateX(PI/2);
-  pistol1.scale(0.5f);
-  pistol2.scale(0.5f);
-  smg1 = loadshape("data/smg1.obj","data/smgtext.png");
-  smg2 = loadshape("data/smg2.obj","data/smgtext.png");
+  pistol2.rotateZ(PI);
+  pistol1.scale(0.75f);
+  pistol2.scale(0.75f);
+  pistol1.translate(0.05f,0,1.3f);
+  pistol2.translate(0.05f,0,1.3f);
+  smg1 = loadshape("data/smg1R.obj","data/smgtextR.png");
+  smg2 = loadshape("data/smg2R.obj","data/smgtextR.png");
   smg1.rotateX(PI/2);
   smg2.rotateX(PI/2);
-  smg1.scale(0.5f);
-  smg2.scale(0.5f);
-  sniper1 = loadshape("data/sniper1.obj","data/snipertext.png");
-  sniper2 = loadshape("data/sniper2.obj","data/snipertext.png");
+  smg1.translate(0.05f,0,0.6f);
+  smg2.translate(0.05f,0,0.6f);
+  smg1.rotateZ(PI);
+  smg2.rotateZ(PI);
+  smg1.scale(0.75f);
+  smg2.scale(0.75f);
+  sniper1 = loadshape("data/sniper1R.obj","data/snipertextR.png");
+  sniper2 = loadshape("data/sniper2R.obj","data/snipertextR.png");
   sniper1.rotateX(PI/2);
   sniper2.rotateX(PI/2);
-  sniper1.scale(0.7f);
-  sniper2.scale(0.7f);
+  sniper1.rotateZ(PI);
+  sniper2.rotateZ(PI);
+  sniper1.translate(0.05f,0,1.1f);
+  sniper2.translate(0.05f,0,1.1f);
+  sniper1.scale(0.75f);
+  sniper2.scale(0.75f);
   weaponcrate = loadshape("data/weaponcrate.obj","data/cratetext.png");
   weaponcrate.rotateX(PI/2);
   setupweapons();
@@ -210,7 +222,7 @@ class barrier{
         current.pos.x = lerp(current.pos.x,current.pos.x+restrict.x*zombspeed/speed*t,(1.0f-d/20.0f));
         current.pos.y = lerp(current.pos.y,current.pos.y+restrict.y*zombspeed/speed*t,(1.0f-d/20.0f));
         if(ishosting){
-          hp-=0.5f*(round/20.0f);
+          hp-=0.5f*(round/10.0f);
         }
       }
     }
@@ -433,7 +445,7 @@ PVector mouse = new PVector(0,0);
 //camera(width/2.0, height/2.0, (height/2.0) / tan(PI*30.0 / 180.0), width/2.0, height/2.0, 0, 0, 1, 0)
 //camera(eyeX, eyeY, eyeZ, centerX, centerY, centerZ, upX, upY, upZ)
 public void cam(){
-  d3.perspective(PI/3.0f, PApplet.parseFloat(width)/PApplet.parseFloat(height), (height/2.0f) / tan(PI/3.0f/2.0f)/500.0f, (height/2.0f) / tan(PI/3.0f/2.0f)*30.0f);
+  d3.perspective(lerp(PI/3.0f,PI/6.0f,scopelerp), PApplet.parseFloat(width)/PApplet.parseFloat(height), (height/2.0f) / tan(PI/3.0f/2.0f)/500.0f, (height/2.0f) / tan(PI/3.0f/2.0f)*30.0f);
   d3.camera(player.x,player.y,player.z,player.x+cos(radians(mouse.x)),player.y+sin(radians(mouse.x)),player.z+sin(radians(mouse.y)),0,0,-1);
 }
 
@@ -447,8 +459,13 @@ public void menucam(){
 
 public void mouseMoved(){
   if(menu == false){
-    mouse.x-=(width/2-mouseX)/50.0f;
-    mouse.y+=(height/2-mouseY)/50.0f;
+    if(scoping){
+      mouse.x-=(width/2-mouseX)/50.0f*0.5f;
+      mouse.y+=(height/2-mouseY)/50.0f*0.5f;
+    }else{
+      mouse.x-=(width/2-mouseX)/50.0f;
+      mouse.y+=(height/2-mouseY)/50.0f;
+    }
     mouse.y = constrain(mouse.y,-90,90);
     robot.mouseMove(width/2,height/2);
   }
@@ -456,8 +473,13 @@ public void mouseMoved(){
 
 public void mouseDragged(){
   if(menu == false){
-    mouse.x-=(width/2-mouseX)/50.0f;
-    mouse.y+=(height/2-mouseY)/50.0f;
+    if(scoping){
+      mouse.x-=(width/2-mouseX)/50.0f*0.3f;
+      mouse.y+=(height/2-mouseY)/50.0f*0.3f;
+    }else{
+      mouse.x-=(width/2-mouseX)/50.0f;
+      mouse.y+=(height/2-mouseY)/50.0f;
+    }
     mouse.y = constrain(mouse.y,-90,90);
     robot.mouseMove(width/2,height/2);
   }
@@ -1086,9 +1108,11 @@ PShape sniper1;
 PShape sniper2;
 PShape[][] weapons = new PShape[3][2];
 float[][] weaponstats = new float[3][5];
-int weapon = 1;
+int weapon = 2;
 int gunstate = 0;
 float bulletcount = 0;
+float scopelerp = 0;
+boolean scoping = false;
 public void setupweapons(){
   weapons[0][0] = pistol1;
   weapons[0][1] = pistol2;
@@ -1108,16 +1132,25 @@ public void createweapon(int index, int damage, float firerate, float bulletspee
   weaponstats[index][4] = reloadtimer;
 }
 public void displayweapon(){
+  if(scoping && scopelerp < 1){
+    scopelerp+=0.1f;
+    if(scopelerp > 1){
+      scopelerp = 1;
+    }
+  }else if(scoping == false && scopelerp > 0){
+    scopelerp-=0.1f;
+    if(scopelerp < 0){
+      scopelerp = 0;
+    }
+  }
   d3.translate(player.x,player.y,player.z);
-  shader.set("translate",player.x,player.y,player.z);
   d3.rotateZ(radians(mouse.x)+PI/2);
   d3.rotateX(-sin(radians(mouse.y))-map(reloadtimer,0,weaponstats[weapon][4],0,PI));
-  d3.translate(5,-10-shottimer*2.5f,0);
+  d3.translate(lerp(5,0,scopelerp),lerp(-10-shottimer*2.5f,-6-shottimer*1.5f,scopelerp),lerp(0,-0.2f,scopelerp)); //5
   d3.shape(weapons[weapon][gunstate]);
-  d3.translate(-5,10+shottimer*2.5f,0);
+  d3.translate(-lerp(5,0,scopelerp),-lerp(-10-shottimer*2.5f,-6-shottimer*1.5f,scopelerp),-lerp(0,-0.2f,scopelerp));
   d3.rotateX(sin(radians(mouse.y))+map(reloadtimer,0,weaponstats[weapon][4],0,PI));
   d3.rotateZ(-(radians(mouse.x)+PI/2));
-  shader.set("translate",0,0,0,0);
   d3.translate(-player.x,-player.y,-player.z);
 }
 PShader blood;
@@ -1179,7 +1212,9 @@ public void drawui(){
   ui.clear();
   ui.stroke(0);
   ui.fill(0);
-  ui.image(crosshair,944,524,32,32);
+  if(scoping == false){
+    ui.image(crosshair,944,524,32,32);
+  }
   ui.image(bulletico,80,910);
   ui.textSize(40);
   if(bulletcount < 10){
@@ -1194,7 +1229,7 @@ public void drawui(){
   ui.textSize(20);
   ui.text("Score : " + PApplet.parseInt(points),50,80);
   ui.textSize(40);
-  ui.fill(255,10,10,255-sin(radians(rounddelay*2))*245.0f);
+  ui.fill(255,10,10,255-(cos(radians(rounddelay*2))+0.5f)*245.0f);
   ui.text("Round : " + PApplet.parseInt(round),45,40);
   if(started == false && ishosting){
     ui.fill(255,50,50);
@@ -1224,13 +1259,13 @@ class tower{
     for(int i = 0; i < zombies.size(); i++){
       zombie current = zombies.get(i);
       float d = dist(current.pos.x,current.pos.y,pos.x,pos.y);
-      if(d < 20){
+      if(d < 60){
         PVector restrict = vectortowards(pos,current.pos);
-        float t = 9*1.0f/(sqrt(pow(restrict.x,2)+pow(restrict.y,2)));
-        current.pos.x = lerp(current.pos.x,current.pos.x+restrict.x*zombspeed/speed*t,(1.0f-d/20.0f));
-        current.pos.y = lerp(current.pos.y,current.pos.y+restrict.y*zombspeed/speed*t,(1.0f-d/20.0f));
+        float t = 3*1.0f/(sqrt(pow(restrict.x,2)+pow(restrict.y,2)));
+        current.pos.x = lerp(current.pos.x,current.pos.x+restrict.x*zombspeed/speed*t,(1.0f-d/60.0f));
+        current.pos.y = lerp(current.pos.y,current.pos.y+restrict.y*zombspeed/speed*t,(1.0f-d/60.0f));
         if(ishosting){
-          hp-=0.5f*(round/20.0f);
+          hp-=0.5f*(round/10.0f);
         }
       }
     }
@@ -1442,11 +1477,11 @@ public void move(){
       player.z = lerp(player.z,towerbox.z,0.35f);
       fall = 0;
       if(keys[6] == 1){
-        fall = -2;
-        player.z+=1;
+        fall = -1.8f;
+        player.z+=0.1f;
       }
-    }else if(player.z >= towerbox.z+10){
-      player.z = towerbox.z+9.9f;
+    }else if(player.z >= towerbox.z+7){
+      player.z = towerbox.z+6.9f;
       fall = 0;
     }else{
       fall+=0.14f;
@@ -1479,12 +1514,12 @@ public void move(){
     for(int i = 0; i < zombies.size(); i++){
       zombie current = zombies.get(i);
       float d = dist(player.x,player.y,player.z,current.pos.x,current.pos.y,current.pos.z);
-      if(d < 30){
+      if(d < 20){
         PVector restrict = vectortowards(current.pos,player);
         float t = 3*1.0f/(sqrt(pow(restrict.x,2)+pow(restrict.y,2)+pow(restrict.z,2)));     
-        player.x = lerp(player.x,player.x+restrict.x*movespeed/speed*t,3.0f-d/10.0f);
-        player.y = lerp(player.y,player.y+restrict.y*movespeed/speed*t,3.0f-d/10.0f);
-        player.z = lerp(player.z,player.z+restrict.z*movespeed/speed*t,3.0f-d/10.0f);
+        player.x = lerp(player.x,player.x+restrict.x*movespeed/speed*t,2.0f-d/10.0f);
+        player.y = lerp(player.y,player.y+restrict.y*movespeed/speed*t,2.0f-d/10.0f);
+        player.z = lerp(player.z,player.z+restrict.z*movespeed/speed*t,2.0f-d/10.0f);
         fall-=restrict.z*0.1f;
       }
     }
@@ -1714,11 +1749,15 @@ float shottimer = 0;
 public void mousePressed(){
   if(mouseButton == LEFT && bulletcount > 0 && reloadtimer == 0 && reloading == false){
     shooting = true;
+  }if(mouseButton == RIGHT && reloadtimer == 0 && reloading == false){
+    scoping = true;
   }
 }
 public void mouseReleased(){
   if(mouseButton == LEFT){
     shooting = false;
+  }else if(mouseButton == RIGHT){
+    scoping = false;
   }
 }
 public void manageshooting(){
@@ -1757,7 +1796,11 @@ public void shoot(){
   offset.x*=10;
   offset.y*=10;
   offset.z*=10;
-  bullets.add(new projectile(new PVector(player.x+offset.x,player.y+offset.y,player.z+offset.z),facingdir,weaponstats[weapon][0]));
+  if(scoping){
+    bullets.add(new projectile(new PVector(player.x+offset.x*0.15f,player.y+offset.y*0.15f,player.z+offset.z-0.6f),facingdir,weaponstats[weapon][0]));
+  }else{
+    bullets.add(new projectile(new PVector(player.x+offset.x,player.y+offset.y,player.z+offset.z),facingdir,weaponstats[weapon][0]));
+  }
   client.write(createbmessage(myip,new PVector(player.x+offset.x,player.y+offset.y,player.z+offset.z),facingdir.copy()));
 }
 class projectile{
@@ -2090,7 +2133,7 @@ class zombie{
     }
     target = closestClient(pos);
     PVector dir = vectortowards(pos,target);
-    if(dist(target.x,target.y,pos.x,pos.y) < 35){
+    if(dist(target.x,target.y,target.z,pos.x,pos.y,pos.z) < 20){
       attacktimer = 1.25f;
     }else if(attacktimer == 0){
       if(sqrt((rot*rot)-(pow(bearing(target,pos),2))) > 180 || sqrt((rot*rot)-(pow(bearing(target,pos),2))) < -180){
@@ -2121,12 +2164,13 @@ class zombie{
       if(current == this || attacktimer != 0){
         continue;
       }
-      float d = dist(pos.x,pos.y,current.pos.x,current.pos.y);
+      float d = dist(pos.x,pos.y,pos.z,current.pos.x,current.pos.y,current.pos.z);
       if(d < 25){
         PVector resist = vectortowards(current.pos,pos);
         float t = 1.0f/(sqrt(pow(resist.x,2)+pow(resist.y,2)));
         pos.x = lerp(pos.x,pos.x+resist.x*zombspeed*t,2.5f-d/10.0f);
         pos.y = lerp(pos.y,pos.y+resist.y*zombspeed*t,2.5f-d/10.0f);
+        pos.y = lerp(pos.z,pos.z+resist.z*zombspeed*t,2.5f-d/10.0f);
       }
     }
     timer+=0.016f;
@@ -2160,7 +2204,7 @@ class zombie{
       zombiea1.translate(pos.x,pos.y,pos.z);    
       d3.shape(zombiea1);
       if(dist(player.x,player.y,player.z,pos.x,pos.y,pos.z) <= 40 && sqrt(pow(rot-bearing(player,pos),2)) <= 45){
-        health-=0.1f;
+        health-=1.0f+round*0.1f;
       }
     }else if(attacktimer != 0){
       zombiea2.resetMatrix();
