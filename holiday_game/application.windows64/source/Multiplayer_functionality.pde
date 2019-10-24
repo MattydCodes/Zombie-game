@@ -57,6 +57,7 @@ void serverEvent(Server someServer, Client someClient) {
   updatezombiepositions();
   refreshbarriers();
   refreshtowers();
+  refreshtorch();
   server.write(sendseed(seed));
 }
 
@@ -165,7 +166,7 @@ String createbmessage(String ip,PVector pos, PVector vel){
 }
 
 String removebarrier(float id){
-  String msg = "e" + str(id) + "]"; //Used:pmcdoequlntsvab   Available: fghijkruwxyz
+  String msg = "e" + str(id) + "]"; //Used:pmcdoequlntsvabfij   Available: ghkruwxyz
   return msg;
 }
 
@@ -181,6 +182,16 @@ String placebarrier(float id, PVector pos){
 
 String placetower(float id, PVector pos){
   String msg = "b" + str(id) + "i" + str(pos.x) + "x" + str(pos.y) + "y" + str(pos.z) + "]";
+  return msg;
+}
+
+String placetorch(float id, PVector pos){
+  String msg = "j" + str(id) + "i" + str(pos.x) + "x" + str(pos.y) + "y" + str(pos.z) + "]";
+  return msg;
+}
+
+String removetorch(float id){
+  String msg = "f" + str(id) + "]"; //Used:pmcdoequlntsvab   Available: fghijkruwxyz
   return msg;
 }
 
@@ -470,7 +481,17 @@ void actonmessage(String msg){
   }else if(st.equals("v")){ //("v" + str(points) + "r" + str(round) + "z");
     if(ishosting == false){
       points = float(msg.substring(msg.indexOf('v')+1,msg.indexOf('r')));
-      round = int(msg.substring(msg.indexOf('r')+1,msg.indexOf(']')));
+      int newround = int(msg.substring(msg.indexOf('r')+1,msg.indexOf(']')));
+      if(newround != round){
+        for(int i = zombies.size()-1; i > -1; i--){
+          zombies.remove(i);
+        }
+        if(alive == false){
+          alive = true;
+          weapon = 0;
+          gunstate = 1;
+        }
+      }
     }
   }else if(st.equals("e")){
     float id = float(msg.substring(msg.indexOf('e')+1,msg.indexOf(']')));
@@ -576,6 +597,37 @@ void actonmessage(String msg){
       }
       if(towers.get(i).id == id){
         towers.remove(i);
+        i--;
+      }
+    }
+  }else if(st.equals("j")){//msg = "q" + str(id) + "i" + str(pos.x) + "x" + str(pos.y) + "y" + str(pos.z) + "z";
+    int index1 = msg.indexOf('j');
+    int index2 = msg.indexOf('i');
+    float id = float(msg.substring(index1+1,index2));
+    index1 = msg.indexOf('i');
+    index2 = msg.indexOf('x');
+    float x = float(msg.substring(index1+1,index2));
+    index1 = msg.indexOf('x');
+    index2 = msg.indexOf('y');
+    float y = float(msg.substring(index1+1,index2));
+    index1 = msg.indexOf('y');
+    index2 = msg.indexOf(']');
+    float z = float(msg.substring(index1+1,index2));
+    boolean f = false;
+    for(int i = 0; i < torches.size(); i++){
+      if(torches.get(i).id == id){
+        f = true;
+      }
+    }
+    if(f == false){
+      torches.add(new torch(new PVector(x,y,z),0,id));
+      points-=200;
+    }
+  }else if(st.equals("f")){
+    float id = float(msg.substring(msg.indexOf('f')+1,msg.indexOf(']')));
+    for(int i = 0; i < torches.size(); i++){
+      if(torches.get(i).id == id){
+        torches.remove(i);
         i--;
       }
     }

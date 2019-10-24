@@ -47,5 +47,11 @@ void outro(){
      for(int i = barriers.size()-1; i > -1; i--){
        barriers.remove(i);
      }
+     for(int i = towers.size()-1; i > -1; i--){
+       towers.remove(i);
+     }   
+     for(int i = torches.size()-1; i > -1; i--){
+       torches.remove(i);
+     }   
    }
 }

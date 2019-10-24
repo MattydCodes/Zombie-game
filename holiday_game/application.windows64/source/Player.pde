@@ -12,7 +12,7 @@ PShape sniper1;
 PShape sniper2;
 PShape[][] weapons = new PShape[3][2];
 float[][] weaponstats = new float[3][5];
-int weapon = 2;
+int weapon = 1;
 int gunstate = 0;
 float bulletcount = 0;
 float scopelerp = 0;

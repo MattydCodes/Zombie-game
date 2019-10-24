@@ -1,4 +1,4 @@
-int[] keys = new int[9];
+int[] keys = new int[10];
 float movespeed = 2;
 float speed = 0;
 float fall = 0;
@@ -148,6 +148,8 @@ void keyPressed(){
       keys[7] = 1;
     }else if(key == 't' || key == 'T'){
       keys[8] = 1;
+    }else if(key == 'f' || key == 'F'){
+      keys[9] = 1;
     }else if(keyCode == 27){
       disconnect(myip);
       exit();
@@ -200,6 +202,13 @@ void keyReleased(){
       if(points >= 200){
         placetower(player.copy().add(new PVector(cos(radians(mouse.x))*40,sin(radians(mouse.x))*40,0)));
       }
+    }else if(key == 'f' || key == 'F'){
+      keys[9] = 0;
+      if(points >= 100){
+        placetorch(player.copy().add(new PVector(cos(radians(mouse.x))*40,sin(radians(mouse.x))*40,0)));
+      }
+    }else if(key == '#'){
+      frameRate(1000);
     }
   }
 }

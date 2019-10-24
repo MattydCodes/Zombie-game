@@ -5,7 +5,7 @@ precision mediump int;
 
 uniform sampler2D texture;
 
-varying float bonus;
+varying vec3 bonus;
 varying vec4 Emissive;
 varying vec4 vertColor;
 varying vec3 ecNormal;
@@ -21,12 +21,14 @@ void main() {
   if(intensity >= 1f){
     intensity = 1f;
   }
+  intensity = intensity*0.02f;
   vec4 tintColor;
   float v = 0f;
   if(Emissive.r > 0.05f && Emissive.g > 0.05f && Emissive.b > 0.05f){
 	tintColor = Emissive*vertColor;
-  }else{//255, 148, 33
-  	tintColor = vec4(intensity*0.05f+bonus, intensity*0.05f+bonus*0.58f, intensity*0.05f+bonus*0.13f, 1f) * vertColor;
+  }else{
+        float l = (bonus.r+bonus.g+bonus.b)/1.2f;
+  	tintColor = vec4(intensity, intensity, intensity, 1f) * vertColor * (1f-l) + vec4(bonus.r,bonus.g,bonus.b,1f) * l;
 	 v = fog;
    	 v/=2000f;
    	 v+=0.2f;

@@ -4,9 +4,13 @@ uniform mat3 normalMatrix;
 uniform mat4 texMatrix;
 
 uniform vec4 lightPosition;
-uniform float xpos[10];
-uniform float ypos[10];
-uniform float zpos[10];
+uniform float xpos[120];
+uniform float ypos[120];
+uniform float zpos[120];
+uniform float r[120];
+uniform float g[120];
+uniform float b[120];
+uniform float di[120];
 uniform int light = 0;
 
 attribute vec4 position;
@@ -15,7 +19,7 @@ attribute vec3 normal;
 attribute vec2 texCoord;
 attribute vec4 emissive;
 
-varying float bonus;
+varying vec3 bonus;
 varying vec4 Emissive;
 varying vec4 vertColor;
 varying vec3 ecNormal;
@@ -48,18 +52,20 @@ float dist(vec4 pos1, vec4 pos2){
 }
 
 void main() {
-  if(light == 1){
-    float bonuslight = 0f;
+  bonus = vec3(0.0f,0.0f,0.0f);
+  if(light > 0f){
     vec4 pos = position;
-    for(int i = 0; i < xpos.length(); i++){
+    for(int i = 0; i < light; i++){
       float d = dist(vec4(xpos[i],ypos[i],zpos[i],0),pos);
-      if(d < 500){
+      if(d < di[i]){
         vec3 direction = normalize(vec3(xpos[i]-pos.x,ypos[i]-pos.y,zpos[i]-pos.z));
-        float val = max(0.0f, dot(direction,normalize(normal))/(d/80.0f));
-        bonuslight = bonuslight + val*val*val*0.9;
+        float val = max(0.0f, dot(direction,normalize(normal))/(d/((di[i]/300.0f)*80.0f)));
+        float val2 = ((di[i]-d)/di[i])*(1f-val);
+        val2 = val2*val2;
+        float l = val*val + val2;
+        bonus = vec3(bonus.r + l*r[i],bonus.g + l*g[i],bonus.b + l*b[i]);
       }
     }
-    bonus = bonuslight;
   }
   gl_Position = transform * position;
   vec3 ecPosition = vec3(modelview * position);

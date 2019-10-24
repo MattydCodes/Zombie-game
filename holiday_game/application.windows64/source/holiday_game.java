@@ -62,6 +62,17 @@ public void setup(){
   towerm[0] = loadshape("data/watchtower1.obj","data/towertext1.png");
   towerm[0].rotateX(PI/2);
   towerm[0].scale(2);  
+  torchm[0] = loadshape("data/tikitorch1.obj","data/tikitext.png");
+  torchm[0].rotateX(PI/2);
+  torchm[0].scale(2);
+  torchm[1] = loadshape("data/tikitorch2.obj","data/tikitext.png");
+  torchm[1].rotateX(PI/2);
+  torchm[1].scale(2);
+  torchm[2] = loadshape("data/tikitorch3.obj","data/tikitext.png");
+  torchm[2].rotateX(PI/2);
+  torchm[2].scale(2);
+  emberm = loadshape("data/ember.obj","data/embertext.png");
+  emberm.scale(2);
   pmodel = loadshape("data/playermodel.obj","data/playertext.png");
   pmodel.rotateX(PI/2);
   pmodel.rotateZ(PI);
@@ -161,12 +172,15 @@ public void draw3d(){
   removedeadzombies();
   managebarriers();
   managetowers();
+  managetorches();
+  manageembers();
   managecorpses();
   manageparticles();
   drawplayers();
   if(alive){
     showbarrel();
     showtower();
+    showtorch();
     cam();
     displayweapon();
   }else{
@@ -326,6 +340,12 @@ public void outro(){
      for(int i = barriers.size()-1; i > -1; i--){
        barriers.remove(i);
      }
+     for(int i = towers.size()-1; i > -1; i--){
+       towers.remove(i);
+     }   
+     for(int i = torches.size()-1; i > -1; i--){
+       torches.remove(i);
+     }   
    }
 }
 boolean menu = true;
@@ -543,6 +563,7 @@ public void serverEvent(Server someServer, Client someClient) {
   updatezombiepositions();
   refreshbarriers();
   refreshtowers();
+  refreshtorch();
   server.write(sendseed(seed));
 }
 
@@ -651,7 +672,7 @@ public String createbmessage(String ip,PVector pos, PVector vel){
 }
 
 public String removebarrier(float id){
-  String msg = "e" + str(id) + "]"; //Used:pmcdoequlntsvab   Available: fghijkruwxyz
+  String msg = "e" + str(id) + "]"; //Used:pmcdoequlntsvabfij   Available: ghkruwxyz
   return msg;
 }
 
@@ -667,6 +688,16 @@ public String placebarrier(float id, PVector pos){
 
 public String placetower(float id, PVector pos){
   String msg = "b" + str(id) + "i" + str(pos.x) + "x" + str(pos.y) + "y" + str(pos.z) + "]";
+  return msg;
+}
+
+public String placetorch(float id, PVector pos){
+  String msg = "j" + str(id) + "i" + str(pos.x) + "x" + str(pos.y) + "y" + str(pos.z) + "]";
+  return msg;
+}
+
+public String removetorch(float id){
+  String msg = "f" + str(id) + "]"; //Used:pmcdoequlntsvab   Available: fghijkruwxyz
   return msg;
 }
 
@@ -956,7 +987,17 @@ public void actonmessage(String msg){
   }else if(st.equals("v")){ //("v" + str(points) + "r" + str(round) + "z");
     if(ishosting == false){
       points = PApplet.parseFloat(msg.substring(msg.indexOf('v')+1,msg.indexOf('r')));
-      round = PApplet.parseInt(msg.substring(msg.indexOf('r')+1,msg.indexOf(']')));
+      int newround = PApplet.parseInt(msg.substring(msg.indexOf('r')+1,msg.indexOf(']')));
+      if(newround != round){
+        for(int i = zombies.size()-1; i > -1; i--){
+          zombies.remove(i);
+        }
+        if(alive == false){
+          alive = true;
+          weapon = 0;
+          gunstate = 1;
+        }
+      }
     }
   }else if(st.equals("e")){
     float id = PApplet.parseFloat(msg.substring(msg.indexOf('e')+1,msg.indexOf(']')));
@@ -1065,6 +1106,37 @@ public void actonmessage(String msg){
         i--;
       }
     }
+  }else if(st.equals("j")){//msg = "q" + str(id) + "i" + str(pos.x) + "x" + str(pos.y) + "y" + str(pos.z) + "z";
+    int index1 = msg.indexOf('j');
+    int index2 = msg.indexOf('i');
+    float id = PApplet.parseFloat(msg.substring(index1+1,index2));
+    index1 = msg.indexOf('i');
+    index2 = msg.indexOf('x');
+    float x = PApplet.parseFloat(msg.substring(index1+1,index2));
+    index1 = msg.indexOf('x');
+    index2 = msg.indexOf('y');
+    float y = PApplet.parseFloat(msg.substring(index1+1,index2));
+    index1 = msg.indexOf('y');
+    index2 = msg.indexOf(']');
+    float z = PApplet.parseFloat(msg.substring(index1+1,index2));
+    boolean f = false;
+    for(int i = 0; i < torches.size(); i++){
+      if(torches.get(i).id == id){
+        f = true;
+      }
+    }
+    if(f == false){
+      torches.add(new torch(new PVector(x,y,z),0,id));
+      points-=200;
+    }
+  }else if(st.equals("f")){
+    float id = PApplet.parseFloat(msg.substring(msg.indexOf('f')+1,msg.indexOf(']')));
+    for(int i = 0; i < torches.size(); i++){
+      if(torches.get(i).id == id){
+        torches.remove(i);
+        i--;
+      }
+    }
   }else{
     println("ERROR : " + msg);
   }
@@ -1113,7 +1185,7 @@ PShape sniper1;
 PShape sniper2;
 PShape[][] weapons = new PShape[3][2];
 float[][] weaponstats = new float[3][5];
-int weapon = 2;
+int weapon = 1;
 int gunstate = 0;
 float bulletcount = 0;
 float scopelerp = 0;
@@ -1161,27 +1233,56 @@ public void displayweapon(){
 PShader blood;
 
 public void setlightsources(){
-  float[] x = new float[10];
-  float[] y = new float[10];
-  float[] z = new float[10];
-  for(int i = 0; i < 10; i++){
-    if(clients.size() <= i){
-      x[i] = -10000;
-      y[i] = -10000;
-      z[i] = -10000;
-    }else{
-      playerc current = clients.get(i);
-      x[i] = current.pos.x;
-      y[i] = current.pos.y;
-      z[i] = current.pos.z+45;
-    }
+  float[] x = new float[clients.size()+torches.size()+embers.size()];
+  float[] y = new float[clients.size()+torches.size()+embers.size()];
+  float[] z = new float[clients.size()+torches.size()+embers.size()];
+  float[] r = new float[clients.size()+torches.size()+embers.size()];
+  float[] g = new float[clients.size()+torches.size()+embers.size()];
+  float[] b = new float[clients.size()+torches.size()+embers.size()];
+  float[] d = new float[clients.size()+torches.size()+embers.size()];
+  for(int i = 0; i < clients.size(); i++){
+    playerc current = clients.get(i);
+    x[i] = current.pos.x;
+    y[i] = current.pos.y;
+    z[i] = current.pos.z+45;
+    r[i] = 1;
+    g[i] = 0.54f;
+    b[i] = 0.02f;
+    d[i] = 300;
+  }
+  for(int i = clients.size(); i < clients.size()+torches.size(); i++){
+    torch current = torches.get(i-clients.size()); 
+    x[i] = current.pos.x;
+    y[i] = current.pos.y;
+    z[i] = current.pos.z+45;
+    r[i] = red(current.emitting)/255.0f;
+    g[i] = green(current.emitting)/255.0f;
+    b[i] = blue(current.emitting)/255.0f;
+    d[i] = current.diametre;
+  }
+  for(int i = clients.size()+torches.size(); i < clients.size()+torches.size()+embers.size(); i++){
+    ember current = embers.get(i-clients.size()-torches.size()); 
+    x[i] = current.pos.x;
+    y[i] = current.pos.y;
+    z[i] = current.pos.z+20;
+    r[i] = 1;
+    g[i] = 0.0f;
+    b[i] = 0.0f;
+    d[i] = 150-current.lifetime/2.0f+cos(current.lifetime/10.0f)*20;
   }
   shader.set("xpos",x);
   shader.set("ypos",y);
   shader.set("zpos",z);
-  shader.set("light",1);
+  shader.set("r",r);
+  shader.set("g",g);
+  shader.set("b",b);
+  shader.set("di",d);
+  if(menu == true){
+    shader.set("light",0);
+  }else{
+    shader.set("light",clients.size()+torches.size()+embers.size());
+  }
 }
-
 ArrayList<soundobject> soundobjects = new ArrayList<soundobject>();
 PVector leftear;
 PVector rightear;
@@ -1229,6 +1330,112 @@ public void updatesounds(){
     }else{
       current.calculate();
     }
+  }
+}
+PShape[] torchm = new PShape[3];
+ArrayList<torch> torches = new ArrayList<torch>();
+class torch{
+  PVector pos;
+  float hp;
+  int type = 0;
+  float id;
+  int emitting;
+  float diametre;
+  float frame = 0;
+  float c = 0;
+  int model = 0;
+  torch(PVector pos_, int type_, float id_){
+    pos = pos_.copy();
+    type = type_;
+    if(type == 0){
+      hp = 500;
+    }
+    id = id_;
+  }
+  public void update(){
+    frame+=0.5f;
+    if(frame > 10){
+      model++;
+      if(c > 0.3f){
+        float r = random(360);
+        float d = random(100);
+        float x = cos(radians(r))*d*0.016f;
+        float y = sin(radians(r))*d*0.016f;
+        embers.add(new ember(new PVector(pos.x+8,pos.y+8,pos.z+30),new PVector(x,y,random(0,1.25f))));
+      }
+      if(model > 2){
+        model = 0;
+      }
+      frame = 0;
+    }
+    c = lerp(c,noise(pos.x*pos.y+millis()/300.0f),0.25f);
+    c*=c;
+    c+=0.125f;
+    emitting = lerpColor(color(250, 30, 27),color(255, 80, 36),c);
+    diametre=(0.5f+c)*500;
+    for(int i = 0; i < zombies.size(); i++){
+      zombie current = zombies.get(i);
+      float d = dist(current.pos.x,current.pos.y,pos.x,pos.y);
+      if(d < 20){
+        PVector restrict = vectortowards(pos,current.pos);
+        float t = 9*1.0f/(sqrt(pow(restrict.x,2)+pow(restrict.y,2)));
+        current.pos.x = lerp(current.pos.x,current.pos.x+restrict.x*zombspeed/speed*t,(1.0f-d/20.0f));
+        current.pos.y = lerp(current.pos.y,current.pos.y+restrict.y*zombspeed/speed*t,(1.0f-d/20.0f));
+        if(ishosting){
+          hp-=0.5f*(round/10.0f);
+        }
+      }
+    }
+    float d = dist(player.x,player.y,player.z,pos.x,pos.y,pos.z);
+    if(d < 20){
+      PVector restrict = vectortowards(pos,player);
+      float t = 9*1.0f/(sqrt(pow(restrict.x,2)+pow(restrict.y,2)+pow(restrict.z,2)));   
+      player.x = lerp(player.x,player.x+restrict.x*movespeed/speed*t,(1.0f-d/20.0f));
+      player.y = lerp(player.y,player.y+restrict.y*movespeed/speed*t,(1.0f-d/20.0f));
+      player.z = lerp(player.z,player.z+restrict.y*movespeed/speed*t,(1.0f-d/20.0f));
+      fall-=restrict.z*0.25f;
+    }
+  }
+  public void display(){
+    torchm[model].translate(pos.x,pos.y,pos.z);
+    d3.shape(torchm[model]);
+    torchm[model].translate(-pos.x,-pos.y,-pos.z);
+  }
+}
+public void managetorches(){
+  for(int i = torches.size()-1; i > -1; i--){
+    torch current = torches.get(i);
+    current.update();
+    current.display();
+    if(current.hp <= 0 && ishosting){
+      client.write(removetorch(current.id));
+    }
+  }
+}
+
+public void placetorch(PVector pos){
+  pos = pos.copy();
+  pos.z = nval(pos.x/scale,pos.y/scale)*scale+15;
+  pos.x = round(pos.x/10)*10;
+  pos.y = round(pos.y/10)*10;
+  client.write(placetorch(random(10000),pos));
+}
+
+public void showtorch(){
+  if(keys[9] == 1 && points >= 50){
+    PVector vec = player.copy().add(new PVector(cos(radians(mouse.x))*40,sin(radians(mouse.x))*40,0));
+    vec.x = round(vec.x/10)*10;
+    vec.y = round(vec.y/10)*10;
+    vec.z = nval(vec.x/scale,vec.y/scale)*scale+18;
+    torchm[0].translate(vec.x,vec.y,vec.z);
+    d3.shape(torchm[0]);
+    torchm[0].translate(-vec.x,-vec.y,-vec.z);
+  }
+}
+
+public void refreshtorch(){
+  for(int i = 0; i < torches.size(); i++){
+    client.write(placebarrier(torches.get(i).id,torches.get(i).pos));
   }
 }
 PGraphics ui;
@@ -1398,6 +1605,49 @@ public void managecorpses(){
     current.display();
   }
 }
+ArrayList<ember> embers = new ArrayList<ember>();
+PShape emberm;
+class ember{
+  PVector pos;
+  PVector dir;
+  boolean move = true;
+  int lifetime = 0;
+  ember(PVector pos_, PVector dir_){
+    pos = pos_.copy();
+    dir = dir_.copy();
+  }
+  public void update(){
+    if(move){
+      pos.add(dir);
+      dir.z-=0.032f;
+      dir.x = lerp(dir.x,0,0.016f);
+      dir.y = lerp(dir.y,0,0.016f);
+      if(pos.z <= nval(pos.x/scale,pos.y/scale)*scale){
+        move = false;
+        pos.z = nval(pos.x/scale,pos.y/scale)*scale+5;
+      }
+      emberm.translate(pos.x,pos.y,pos.z);
+      d3.shape(emberm);
+      emberm.translate(-pos.x,-pos.y,-pos.z);
+    }else{
+      lifetime++;
+      emberm.translate(pos.x,pos.y,pos.z);
+      d3.shape(emberm);
+      emberm.translate(-pos.x,-pos.y,-pos.z);
+    }
+  }
+}
+
+public void manageembers(){
+  for(int i = embers.size()-1; i > -1; i--){
+    ember current = embers.get(i);
+    if(current.lifetime > 300){
+      embers.remove(i);
+    }else{
+      current.update();
+    }
+  }
+}
 ArrayList<gundrop> gundrops = new ArrayList<gundrop>();
 PShape weaponcrate;
 int dropcount = 10;
@@ -1450,7 +1700,7 @@ public void managedrops(){
     current.display();
   }
 }
-int[] keys = new int[9];
+int[] keys = new int[10];
 float movespeed = 2;
 float speed = 0;
 float fall = 0;
@@ -1600,6 +1850,8 @@ public void keyPressed(){
       keys[7] = 1;
     }else if(key == 't' || key == 'T'){
       keys[8] = 1;
+    }else if(key == 'f' || key == 'F'){
+      keys[9] = 1;
     }else if(keyCode == 27){
       disconnect(myip);
       exit();
@@ -1652,6 +1904,13 @@ public void keyReleased(){
       if(points >= 200){
         placetower(player.copy().add(new PVector(cos(radians(mouse.x))*40,sin(radians(mouse.x))*40,0)));
       }
+    }else if(key == 'f' || key == 'F'){
+      keys[9] = 0;
+      if(points >= 100){
+        placetorch(player.copy().add(new PVector(cos(radians(mouse.x))*40,sin(radians(mouse.x))*40,0)));
+      }
+    }else if(key == '#'){
+      frameRate(1000);
     }
   }
 }

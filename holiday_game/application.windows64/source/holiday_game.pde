@@ -42,6 +42,17 @@ void setup(){
   towerm[0] = loadshape("data/watchtower1.obj","data/towertext1.png");
   towerm[0].rotateX(PI/2);
   towerm[0].scale(2);  
+  torchm[0] = loadshape("data/tikitorch1.obj","data/tikitext.png");
+  torchm[0].rotateX(PI/2);
+  torchm[0].scale(2);
+  torchm[1] = loadshape("data/tikitorch2.obj","data/tikitext.png");
+  torchm[1].rotateX(PI/2);
+  torchm[1].scale(2);
+  torchm[2] = loadshape("data/tikitorch3.obj","data/tikitext.png");
+  torchm[2].rotateX(PI/2);
+  torchm[2].scale(2);
+  emberm = loadshape("data/ember.obj","data/embertext.png");
+  emberm.scale(2);
   pmodel = loadshape("data/playermodel.obj","data/playertext.png");
   pmodel.rotateX(PI/2);
   pmodel.rotateZ(PI);
@@ -141,12 +152,15 @@ void draw3d(){
   removedeadzombies();
   managebarriers();
   managetowers();
+  managetorches();
+  manageembers();
   managecorpses();
   manageparticles();
   drawplayers();
   if(alive){
     showbarrel();
     showtower();
+    showtorch();
     cam();
     displayweapon();
   }else{
