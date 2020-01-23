@@ -653,7 +653,6 @@ void manageserver(){
   }
   updatezombiepositions();
 }
-
 void drawplayers(){
   for(int i = clients.size()-1; i > -1; i--){
     if(clients.get(i).lifetime <= 0){
